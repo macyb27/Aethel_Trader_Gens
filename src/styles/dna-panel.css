@@ -1,0 +1,344 @@
+/* ═══════════════════════════════════════════════════════════════
+   DNA CONTROL PANEL - Fixed Bottom Bar Styles
+   Transparent, animated sliders for phenotype control
+   ═══════════════════════════════════════════════════════════════ */
+
+.dna-control-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(5, 5, 5, 0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(0, 243, 255, 0.2);
+  z-index: 100;
+  transition: transform var(--transition-normal), opacity var(--transition-normal);
+}
+
+.dna-control-panel.collapsed {
+  transform: translateY(calc(100% - 40px));
+}
+
+.dna-control-panel.locked .dna-sliders {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Toggle Button */
+.dna-toggle-btn {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  background: rgba(10, 10, 10, 0.9);
+  border: 1px solid rgba(188, 19, 254, 0.3);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  color: var(--plasma-purple);
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dna-toggle-btn:hover {
+  background: rgba(188, 19, 254, 0.2);
+  border-color: var(--plasma-purple);
+}
+
+.toggle-icon {
+  font-size: 0.6rem;
+  transition: transform var(--transition-fast);
+}
+
+/* Content */
+.dna-content {
+  display: grid;
+  grid-template-columns: 200px 1fr auto;
+  gap: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Genome Indicator */
+.genome-indicator {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-sm);
+  background: rgba(10, 10, 10, 0.5);
+  border: 1px solid rgba(0, 243, 255, 0.15);
+  border-radius: 8px;
+}
+
+.genome-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+
+.genome-icon {
+  font-size: 1rem;
+}
+
+.genome-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--neon-cyan);
+  text-transform: uppercase;
+}
+
+.genome-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.genome-id {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+}
+
+.genome-stats {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.genome-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.5rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.genome-empty {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: var(--space-sm);
+}
+
+/* Sliders Container */
+.dna-sliders {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+}
+
+/* Slider Container */
+.dna-slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.dna-slider-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.dna-slider-icon {
+  font-size: 0.9rem;
+}
+
+.dna-slider-label {
+  flex: 1;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.dna-slider-value {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* Slider Track */
+.dna-slider-track-container {
+  position: relative;
+}
+
+.dna-slider-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  background: linear-gradient(
+    to right,
+    var(--slider-color, var(--neon-cyan)) 0%,
+    var(--slider-color, var(--neon-cyan)) var(--slider-progress, 50%),
+    var(--deep-space) var(--slider-progress, 50%),
+    var(--deep-space) 100%
+  );
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dna-slider-input:hover {
+  box-shadow: 0 0 10px var(--slider-color, var(--neon-cyan));
+}
+
+/* Slider Thumb */
+.dna-slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--void-black);
+  border: 2px solid var(--slider-color, var(--neon-cyan));
+  border-radius: 50%;
+  cursor: grab;
+  transition: all var(--transition-fast);
+  box-shadow: 0 0 10px var(--slider-color, var(--neon-cyan));
+}
+
+.dna-slider-input::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  background: var(--slider-color, var(--neon-cyan));
+}
+
+.dna-slider-input::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.1);
+}
+
+.dna-slider-input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--void-black);
+  border: 2px solid var(--slider-color, var(--neon-cyan));
+  border-radius: 50%;
+  cursor: grab;
+  transition: all var(--transition-fast);
+  box-shadow: 0 0 10px var(--slider-color, var(--neon-cyan));
+}
+
+/* Slider Labels */
+.dna-slider-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.dna-slider-min,
+.dna-slider-max {
+  font-size: 0.5rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+/* Actions */
+.dna-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  justify-content: center;
+}
+
+.dna-btn {
+  padding: var(--space-xs) var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 1px solid;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: transparent;
+}
+
+.dna-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dna-btn-lock {
+  padding: var(--space-xs);
+  font-size: 1rem;
+  border-color: var(--text-secondary);
+  color: var(--text-secondary);
+}
+
+.dna-btn-lock:hover:not(:disabled) {
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+}
+
+.dna-btn-reset {
+  border-color: var(--text-secondary);
+  color: var(--text-secondary);
+}
+
+.dna-btn-reset:hover:not(:disabled) {
+  border-color: var(--warning-red);
+  color: var(--warning-red);
+}
+
+.dna-btn-apply {
+  border-color: var(--plasma-purple);
+  color: var(--plasma-purple);
+}
+
+.dna-btn-apply:hover:not(:disabled) {
+  background: var(--plasma-purple);
+  color: white;
+  box-shadow: 0 0 15px var(--plasma-purple);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .dna-content {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+  
+  .dna-sliders {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .genome-indicator {
+    display: none;
+  }
+  
+  .dna-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  .dna-sliders {
+    grid-template-columns: 1fr;
+  }
+  
+  .dna-content {
+    padding: var(--space-sm);
+  }
+}

@@ -10,10 +10,14 @@ import { state, actions, StrategyDNA } from './store';
 import './index.css';
 import './styles/flow-mode.css';
 import './styles/nexus-mode.css';
+import './styles/dna-panel.css';
+import './styles/modals.css';
 
 // Lazy load heavy components
 const FlowMode = lazy(() => import('./components/FlowMode'));
 const NexusMode = lazy(() => import('./components/NexusMode'));
+const DNAControlPanel = lazy(() => import('./components/DNAControlPanel'));
+const AwakeningButton = lazy(() => import('./components/AwakeningButton'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LOADING SCREEN COMPONENT
@@ -114,18 +118,18 @@ function generateMockPopulation(count: number): StrategyDNA[] {
       genomeId: `GENOME-${i.toString().padStart(4, '0')}-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
       genomeString: btoa(`R${Math.random().toFixed(4)}H${Math.random().toFixed(4)}`),
       generation: Math.floor(Math.random() * 50) + 1,
-      sharpeRatio: (Math.random() * 4) - 1, // -1 to 3
+      sharpeRatio: (Math.random() * 4) - 1,
       sortinoRatio: (Math.random() * 4) - 1,
-      maxDrawdown: Math.random() * 0.3, // 0-30%
-      winRate: 0.4 + Math.random() * 0.3, // 40-70%
-      profitFactor: 0.8 + Math.random() * 1.5, // 0.8-2.3
+      maxDrawdown: Math.random() * 0.3,
+      winRate: 0.4 + Math.random() * 0.3,
+      profitFactor: 0.8 + Math.random() * 1.5,
       totalTrades: Math.floor(Math.random() * 1000) + 100,
       riskLevel: Math.random(),
       timeHorizon: Math.random(),
       trendBias: Math.random(),
       volatilityAffinity: Math.random(),
       entanglementScore: Math.random(),
-      lastSentiment: (Math.random() * 2) - 1, // -1 to 1
+      lastSentiment: (Math.random() * 2) - 1,
       isActive: i === 0,
       isSurvivalDna: false,
       fitnessRank: i + 1,
@@ -133,7 +137,6 @@ function generateMockPopulation(count: number): StrategyDNA[] {
     population.push(dna);
   }
   
-  // Sort by Sharpe ratio
   population.sort((a, b) => b.sharpeRatio - a.sharpeRatio);
   population.forEach((dna, idx) => {
     dna.fitnessRank = idx + 1;
@@ -156,7 +159,6 @@ const App: Component = () => {
         agents = state.totalAgents;
         clearInterval(interval);
         
-        // Initialization complete
         setTimeout(() => {
           actions.setStatus('ready');
           actions.addLog('success', 'CORE', '✅ Oracle initialization complete');
@@ -164,19 +166,13 @@ const App: Component = () => {
           actions.addLog('quantum', 'QUANTUM', 'Entanglement detector online');
           actions.addLog('info', 'SHIELD', 'Oracle Shield armed and monitoring');
           
-          // Generate mock population for GSM visualization
           const mockPopulation = generateMockPopulation(50);
           actions.updatePopulation(mockPopulation);
           actions.setActiveGenome(mockPopulation[0]);
           
           actions.addLog('info', 'GA', `Loaded ${mockPopulation.length} genome population`);
           actions.addLog('success', 'GSM', '🌌 Generative Strategy Matrix ready');
-          
-          // Set status to active
-          setTimeout(() => {
-            actions.setStatus('active');
-            actions.addLog('info', 'CORE', '🚀 Oracle now ACTIVE - Ready for trading');
-          }, 1000);
+          actions.addLog('info', 'CORE', '🔮 Press ACTIVATE ORACLE to begin');
         }, 500);
       }
       
@@ -189,7 +185,6 @@ const App: Component = () => {
   // Keyboard shortcuts
   onMount(() => {
     const handleKeydown = (e: KeyboardEvent) => {
-      // Skip if typing in an input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
@@ -267,6 +262,14 @@ const App: Component = () => {
           <Show when={state.mode === 'nexus'}>
             <NexusMode />
           </Show>
+          
+          {/* DNA Control Panel */}
+          <Show when={state.status === 'active'}>
+            <DNAControlPanel />
+          </Show>
+          
+          {/* Awakening Button */}
+          <AwakeningButton />
         </Suspense>
         
         <HotkeyHints />
