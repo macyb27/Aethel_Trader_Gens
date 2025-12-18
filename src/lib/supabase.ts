@@ -199,3 +199,173 @@ export async function getTradingLogs(userId: string, limit = 100) {
 
   return { data, error };
 }
+
+export type PaymentMethodType = 'BANK_ACCOUNT' | 'CRYPTO_WALLET' | 'CARD' | 'PAYMENT_PROCESSOR';
+export type Currency = 'USD' | 'EUR' | 'GBP' | 'USDT' | 'USDC' | 'BTC' | 'ETH' | 'SOL' | 'BNB';
+export type TransactionType = 'DEPOSIT' | 'WITHDRAWAL' | 'TRADE_PROFIT' | 'TRADE_LOSS' | 'FEE';
+export type TransactionStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+
+export interface PaymentMethod {
+  id: string;
+  type: PaymentMethodType;
+  provider: string;
+  name: string;
+  accountIdentifier: string;
+  currency: Currency;
+  isVerified: boolean;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface WalletBalance {
+  id: string;
+  currency: Currency;
+  balance: number;
+  lockedBalance: number;
+  totalDeposited: number;
+  totalWithdrawn: number;
+  totalPnl: number;
+  updatedAt: string;
+}
+
+export interface Transaction {
+  id: string;
+  type: TransactionType;
+  currency: Currency;
+  amount: number;
+  fee: number;
+  status: TransactionStatus;
+  paymentMethodId: string | null;
+  paymentReference: string | null;
+  description: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export async function getPaymentMethods(userId: string): Promise<PaymentMethod[]> {
+  const { data, error } = await supabase
+    .from('payment_methods')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map((pm) => ({
+    id: pm.id,
+    type: pm.type as PaymentMethodType,
+    provider: pm.provider,
+    name: pm.name,
+    accountIdentifier: pm.account_identifier,
+    currency: pm.currency as Currency,
+    isVerified: pm.is_verified,
+    isActive: pm.is_active,
+    createdAt: pm.created_at,
+  }));
+}
+
+export async function addPaymentMethod(
+  userId: string,
+  type: PaymentMethodType,
+  provider: string,
+  name: string,
+  accountIdentifier: string,
+  currency: Currency
+) {
+  const { data, error } = await supabase
+    .from('payment_methods')
+    .insert({
+      user_id: userId,
+      type,
+      provider,
+      name,
+      account_identifier: accountIdentifier,
+      currency,
+      is_verified: false,
+      is_active: true,
+    })
+    .select('id')
+    .single();
+
+  return { data, error };
+}
+
+export async function deletePaymentMethod(paymentMethodId: string) {
+  const { error } = await supabase
+    .from('payment_methods')
+    .delete()
+    .eq('id', paymentMethodId);
+
+  return { error };
+}
+
+export async function getWalletBalances(userId: string): Promise<WalletBalance[]> {
+  const { data, error } = await supabase
+    .from('wallet_balances')
+    .select('*')
+    .eq('user_id', userId);
+
+  if (error || !data) return [];
+
+  return data.map((wb) => ({
+    id: wb.id,
+    currency: wb.currency as Currency,
+    balance: parseFloat(wb.balance as string) || 0,
+    lockedBalance: parseFloat(wb.locked_balance as string) || 0,
+    totalDeposited: parseFloat(wb.total_deposited as string) || 0,
+    totalWithdrawn: parseFloat(wb.total_withdrawn as string) || 0,
+    totalPnl: parseFloat(wb.total_pnl as string) || 0,
+    updatedAt: wb.updated_at,
+  }));
+}
+
+export async function getTransactions(userId: string, limit = 50): Promise<Transaction[]> {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+
+  return data.map((tx) => ({
+    id: tx.id,
+    type: tx.type as TransactionType,
+    currency: tx.currency as Currency,
+    amount: parseFloat(tx.amount as string) || 0,
+    fee: parseFloat(tx.fee as string) || 0,
+    status: tx.status as TransactionStatus,
+    paymentMethodId: tx.payment_method_id,
+    paymentReference: tx.payment_reference,
+    description: tx.description,
+    createdAt: tx.created_at,
+    completedAt: tx.completed_at,
+  }));
+}
+
+export async function createTransaction(
+  userId: string,
+  type: TransactionType,
+  currency: Currency,
+  amount: number,
+  paymentMethodId: string | null,
+  description: string
+) {
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert({
+      user_id: userId,
+      type,
+      currency,
+      amount,
+      fee: 0,
+      status: 'PENDING',
+      payment_method_id: paymentMethodId,
+      description,
+    })
+    .select('id')
+    .single();
+
+  return { data, error };
+}

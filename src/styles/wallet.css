@@ -1,0 +1,423 @@
+.wallet-panel {
+  padding: 0;
+}
+
+.wallet-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+}
+
+.wallet-tabs button {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.wallet-tabs button:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.wallet-tabs button.active {
+  color: #00d4aa;
+  background: rgba(0, 212, 170, 0.1);
+}
+
+.wallet-alert {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.wallet-alert.error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.wallet-alert.success {
+  background: rgba(0, 212, 170, 0.15);
+  border: 1px solid rgba(0, 212, 170, 0.3);
+  color: #00d4aa;
+}
+
+.wallet-content {
+  min-height: 300px;
+}
+
+.balance-section .total-balance {
+  background: linear-gradient(135deg, rgba(0, 212, 170, 0.15) 0%, rgba(0, 150, 136, 0.1) 100%);
+  border: 1px solid rgba(0, 212, 170, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.balance-section .total-balance .label {
+  display: block;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 0.5rem;
+}
+
+.balance-section .total-balance .value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #00d4aa;
+}
+
+.currency-balances {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.balance-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.balance-card .currency-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.balance-card .currency-symbol {
+  background: rgba(0, 212, 170, 0.15);
+  color: #00d4aa;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.balance-card .balance-amount {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.balance-card .balance-details {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.balance-card .balance-stats span.positive {
+  color: #00d4aa;
+}
+
+.balance-card .balance-stats span.negative {
+  color: #ef4444;
+}
+
+.deposit-section,
+.withdraw-section,
+.methods-section,
+.history-section {
+  max-width: 100%;
+}
+
+.deposit-section h3,
+.withdraw-section h3,
+.methods-section h3,
+.history-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.wallet-panel .form-group {
+  margin-bottom: 1rem;
+}
+
+.wallet-panel .form-group label {
+  display: block;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.4rem;
+}
+
+.wallet-panel .form-group input,
+.wallet-panel .form-group select {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease;
+}
+
+.wallet-panel .form-group input:focus,
+.wallet-panel .form-group select:focus {
+  outline: none;
+  border-color: #00d4aa;
+}
+
+.wallet-panel .form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.wallet-panel .form-group .available-balance {
+  display: block;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 0.4rem;
+}
+
+.wallet-panel .btn {
+  padding: 0.65rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.wallet-panel .btn-primary {
+  background: linear-gradient(135deg, #00d4aa 0%, #00a896 100%);
+  color: #000;
+}
+
+.wallet-panel .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #00e6b8 0%, #00b8a4 100%);
+}
+
+.wallet-panel .btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wallet-panel .btn-small {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+}
+
+.wallet-panel .btn-danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.wallet-panel .btn-danger:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-header h3 {
+  margin: 0;
+}
+
+.methods-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.method-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.method-card.unverified {
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.method-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 212, 170, 0.15);
+  color: #00d4aa;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.method-info {
+  flex: 1;
+}
+
+.method-name {
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0.25rem;
+}
+
+.method-details {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.method-badges {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.method-badges .badge {
+  font-size: 0.65rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.method-badges .badge.verified {
+  background: rgba(0, 212, 170, 0.15);
+  color: #00d4aa;
+}
+
+.method-badges .badge.pending {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.add-method-form {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.add-method-form h4 {
+  margin: 0 0 1rem 0;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.transactions-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.transaction-row {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tx-type {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  min-width: 80px;
+  text-align: center;
+}
+
+.tx-type.deposit {
+  background: rgba(0, 212, 170, 0.15);
+  color: #00d4aa;
+}
+
+.tx-type.withdrawal {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.tx-type.profit {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.tx-type.loss {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.tx-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.tx-amount {
+  font-weight: 600;
+  color: #fff;
+}
+
+.tx-date {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.tx-status {
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.tx-status.pending {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.tx-status.completed {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.tx-status.failed {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.9rem;
+}
