@@ -2,11 +2,14 @@
  * ═══════════════════════════════════════════════════════════════════════════
  * ÆTHER-TRADER Ω v4.0 - MULTI-EXCHANGE CONNECTOR
  * Normalized WebSocket connections for Bybit & Binance
+ * Supports both simulated mode and real API mode
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
 import { actions } from '../store';
 import { crdtStore, NormalizedKline, NormalizedTrade } from './crdt_store';
+import { getBybitTicker, getBinanceTicker, getBybitPositions, getBybitAccountBalance } from '../services/api';
+import { authState } from '../store/auth';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPE DEFINITIONS
@@ -163,13 +166,26 @@ class ExchangeConnector {
   private heartbeatTimer: number | null = null;
   private reconnectTimer: number | null = null;
   private messageHandlers: Map<string, (data: unknown) => void> = new Map();
-  
-  // Simulated mode (for demo without real WebSocket)
+
   private isSimulated: boolean = true;
   private simulationTimer: number | null = null;
-  
+  private realApiPollingTimer: number | null = null;
+
   constructor(exchange: Exchange) {
     this.config = EXCHANGE_CONFIGS[exchange];
+  }
+
+  setRealMode(enabled: boolean): void {
+    this.isSimulated = !enabled;
+    if (enabled) {
+      actions.addLog('success', this.config.name, 'Switched to REAL API mode');
+    } else {
+      actions.addLog('info', this.config.name, 'Switched to SIMULATED mode');
+    }
+  }
+
+  isRealMode(): boolean {
+    return !this.isSimulated;
   }
   
   async connect(): Promise<void> {
@@ -177,7 +193,16 @@ class ExchangeConnector {
       await this.startSimulation();
       return;
     }
-    
+
+    const hasApiKey = authState.apiKeys.some(
+      k => k.provider === this.config.name && k.isActive
+    );
+
+    if (hasApiKey) {
+      await this.startRealApiPolling();
+      return;
+    }
+
     return new Promise((resolve, reject) => {
       try {
         this.ws = new WebSocket(this.config.wsUrl);
@@ -215,10 +240,103 @@ class ExchangeConnector {
       }
     });
   }
-  
+
+  private async startRealApiPolling(): Promise<void> {
+    this.state.isConnected = true;
+    actions.addLog('success', this.config.name, 'Connected via REST API polling');
+
+    const fetchTicker = async () => {
+      try {
+        let ticker;
+        if (this.config.name === 'BYBIT') {
+          ticker = await getBybitTicker('BTCUSDT');
+        } else {
+          ticker = await getBinanceTicker('BTCUSDT');
+        }
+
+        const kline: NormalizedKline = {
+          timestamp: Date.now(),
+          exchange: this.config.name,
+          symbol: ticker.symbol,
+          interval: '1m',
+          open: ticker.lastPrice,
+          high: ticker.highPrice24h,
+          low: ticker.lowPrice24h,
+          close: ticker.lastPrice,
+          volume: ticker.volume24h,
+          trades: 0,
+        };
+
+        crdtStore.addKline(ticker.symbol, '1m', kline);
+
+        actions.updateMarketData(ticker.symbol, {
+          symbol: ticker.symbol,
+          price: ticker.lastPrice,
+          change24h: ticker.priceChangePercent24h,
+          volume24h: ticker.volume24h,
+          high24h: ticker.highPrice24h,
+          low24h: ticker.lowPrice24h,
+          lastUpdate: Date.now(),
+        });
+
+        this.messageHandlers.forEach((handler, channel) => {
+          if (channel.includes('kline')) {
+            handler(kline);
+          }
+        });
+
+        actions.addLog('info', this.config.name,
+          `BTCUSDT: $${ticker.lastPrice.toFixed(2)} (${ticker.priceChangePercent24h >= 0 ? '+' : ''}${ticker.priceChangePercent24h.toFixed(2)}%)`
+        );
+      } catch (error) {
+        actions.addLog('error', this.config.name,
+          `API Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+    };
+
+    await fetchTicker();
+
+    this.realApiPollingTimer = window.setInterval(fetchTicker, 5000);
+  }
+
+  async fetchAccountData(): Promise<void> {
+    if (this.config.name !== 'BYBIT') return;
+
+    try {
+      const [balances, positions] = await Promise.all([
+        getBybitAccountBalance(),
+        getBybitPositions(),
+      ]);
+
+      const totalValue = balances.reduce((sum, b) => sum + b.walletBalance, 0);
+      const unrealizedPnL = positions.reduce((sum, p) => sum + p.unrealisedPnl, 0);
+
+      actions.updatePortfolio({
+        totalValue,
+        unrealizedPnL,
+        positions: positions.map(p => ({
+          symbol: p.symbol,
+          side: p.side === 'Buy' ? 'long' : 'short',
+          size: p.size,
+          entryPrice: p.avgPrice,
+          currentPrice: p.markPrice,
+          unrealizedPnL: p.unrealisedPnl,
+          leverage: p.leverage,
+        })),
+      });
+
+      actions.addLog('info', 'PORTFOLIO', `Balance: $${totalValue.toFixed(2)} | Positions: ${positions.length}`);
+    } catch (error) {
+      actions.addLog('error', 'PORTFOLIO',
+        `Failed to fetch account data: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
   private async startSimulation(): Promise<void> {
     this.state.isConnected = true;
-    actions.addLog('info', this.config.name, `📡 Simulated connection active`);
+    actions.addLog('info', this.config.name, 'Simulated connection active');
     
     // Generate simulated market data
     let basePrice = 42000;
@@ -277,7 +395,12 @@ class ExchangeConnector {
       clearInterval(this.simulationTimer);
       this.simulationTimer = null;
     }
-    
+
+    if (this.realApiPollingTimer) {
+      clearInterval(this.realApiPollingTimer);
+      this.realApiPollingTimer = null;
+    }
+
     if (this.ws) {
       this.ws.close();
       this.ws = null;

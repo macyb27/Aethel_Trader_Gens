@@ -2,14 +2,13 @@
  * ═══════════════════════════════════════════════════════════════════════════
  * ÆTHER-TRADER Ω v4.0 - T3 NEWS ORACLE
  * Sentiment firehose with LLM-based classification
+ * Supports real API calls via edge functions
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
 import { actions } from '../store';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPE DEFINITIONS
-// ─────────────────────────────────────────────────────────────────────────────
+import { fetchNews, analyzeSentiment as apiAnalyzeSentiment } from '../services/api';
+import { authState } from '../store/auth';
 
 export interface NewsItem {
   id: string;
@@ -23,11 +22,11 @@ export interface NewsItem {
 }
 
 export interface SentimentResult {
-  score: number;          // -1.0 (bearish) to +1.0 (bullish)
-  confidence: number;     // 0.0 to 1.0
-  magnitude: number;      // Strength of sentiment
-  keywords: string[];     // Key terms extracted
-  categories: string[];   // News categories
+  score: number;
+  confidence: number;
+  magnitude: number;
+  keywords: string[];
+  categories: string[];
   impact: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 }
 
@@ -44,66 +43,47 @@ export interface SentimentAPIResponse {
   reasoning?: string;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SENTIMENT ANALYZER (LLM API CALLER STUB)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Simulates calling DeepSeek/OpenAI API for news classification
- * In production, this would make actual API calls
- */
-async function callSentimentAPI(headline: string, summary?: string): Promise<SentimentAPIResponse> {
-  // Simulate API latency
-  await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
-  
-  // Simulated sentiment analysis based on keywords
+function fallbackSentimentAnalysis(headline: string, summary?: string): SentimentAPIResponse {
   const text = `${headline} ${summary || ''}`.toLowerCase();
-  
-  // Keyword-based scoring (simplified)
+
   const bullishKeywords = ['rally', 'surge', 'gain', 'bullish', 'up', 'rise', 'growth', 'adoption', 'approval', 'etf', 'institutional'];
   const bearishKeywords = ['crash', 'drop', 'fall', 'bearish', 'down', 'decline', 'hack', 'ban', 'regulation', 'sec', 'lawsuit'];
   const highImpactKeywords = ['breaking', 'urgent', 'flash', 'crash', 'hack', 'etf', 'fed', 'rate', 'halving'];
-  
+
   let bullishCount = 0;
   let bearishCount = 0;
   let impactScore = 0;
   const foundKeywords: string[] = [];
-  
+
   bullishKeywords.forEach(kw => {
     if (text.includes(kw)) {
       bullishCount++;
       foundKeywords.push(kw);
     }
   });
-  
+
   bearishKeywords.forEach(kw => {
     if (text.includes(kw)) {
       bearishCount++;
       foundKeywords.push(kw);
     }
   });
-  
+
   highImpactKeywords.forEach(kw => {
     if (text.includes(kw)) impactScore++;
   });
-  
-  // Calculate score
+
   const total = bullishCount + bearishCount;
   let score = 0;
   if (total > 0) {
     score = (bullishCount - bearishCount) / total;
   } else {
-    // Random slight bias if no keywords found
     score = (Math.random() - 0.5) * 0.2;
   }
-  
-  // Calculate confidence based on keyword density
+
   const confidence = Math.min(0.95, 0.3 + (total / 5) * 0.6);
-  
-  // Magnitude based on total sentiment keywords
   const magnitude = Math.min(1, total / 4);
-  
-  // Impact level
+
   let impact: string;
   if (impactScore >= 2 || magnitude > 0.8) {
     impact = 'CRITICAL';
@@ -114,8 +94,7 @@ async function callSentimentAPI(headline: string, summary?: string): Promise<Sen
   } else {
     impact = 'LOW';
   }
-  
-  // Categories
+
   const categories: string[] = [];
   if (text.includes('price') || text.includes('market')) categories.push('MARKET');
   if (text.includes('regulation') || text.includes('sec') || text.includes('law')) categories.push('REGULATORY');
@@ -123,14 +102,10 @@ async function callSentimentAPI(headline: string, summary?: string): Promise<Sen
   if (text.includes('etf') || text.includes('institutional')) categories.push('INSTITUTIONAL');
   if (text.includes('tech') || text.includes('upgrade')) categories.push('TECHNOLOGY');
   if (categories.length === 0) categories.push('GENERAL');
-  
+
   return {
     success: true,
-    sentiment: {
-      score,
-      confidence,
-      magnitude,
-    },
+    sentiment: { score, confidence, magnitude },
     keywords: foundKeywords,
     categories,
     impact,
@@ -138,28 +113,66 @@ async function callSentimentAPI(headline: string, summary?: string): Promise<Sen
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// NEWS ORACLE CLASS
-// ─────────────────────────────────────────────────────────────────────────────
-
 class NewsOracle {
   private sentimentHistory: SentimentResult[] = [];
   private maxHistory: number = 100;
   private aggregatedSentiment: number = 0;
   private sentimentEMA: number = 0;
   private listeners: Set<(sentiment: number) => void> = new Set();
-  
-  /**
-   * Process a news item and return sentiment analysis
-   */
+  private isRealMode: boolean = false;
+  private newsFeedInterval: number | null = null;
+  private cachedNews: NewsItem[] = [];
+
+  setRealMode(enabled: boolean): void {
+    this.isRealMode = enabled;
+    if (enabled) {
+      actions.addLog('success', 'NEWS', 'Switched to REAL API mode for sentiment analysis');
+    } else {
+      actions.addLog('info', 'NEWS', 'Switched to SIMULATED mode for sentiment analysis');
+    }
+  }
+
+  hasRealApiKeys(): boolean {
+    const hasNewsApi = authState.apiKeys.some(k => k.provider === 'NEWS_API' && k.isActive);
+    const hasLlmApi = authState.apiKeys.some(
+      k => (k.provider === 'OPENAI' || k.provider === 'DEEPSEEK') && k.isActive
+    );
+    return hasNewsApi || hasLlmApi;
+  }
+
   async analyzeSentiment(news: NewsItem): Promise<SentimentResult> {
     try {
-      const response = await callSentimentAPI(news.headline, news.summary);
-      
-      if (!response.success) {
-        throw new Error('Sentiment API failed');
+      let response: SentimentAPIResponse;
+
+      if (this.isRealMode && authState.isAuthenticated) {
+        const hasLlmKey = authState.apiKeys.some(
+          k => (k.provider === 'OPENAI' || k.provider === 'DEEPSEEK') && k.isActive
+        );
+
+        if (hasLlmKey) {
+          const apiResult = await apiAnalyzeSentiment([news.headline]);
+          if (apiResult.results && apiResult.results.length > 0) {
+            const r = apiResult.results[0];
+            response = {
+              success: true,
+              sentiment: { score: r.score, confidence: r.confidence, magnitude: r.magnitude },
+              keywords: r.keywords,
+              categories: r.categories,
+              impact: r.impact,
+              reasoning: r.reasoning,
+            };
+            actions.addLog('quantum', 'NEWS', `LLM Analysis (${apiResult.provider}): ${news.headline.slice(0, 40)}...`);
+          } else {
+            response = fallbackSentimentAnalysis(news.headline, news.summary);
+          }
+        } else {
+          response = fallbackSentimentAnalysis(news.headline, news.summary);
+        }
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
+        response = fallbackSentimentAnalysis(news.headline, news.summary);
       }
-      
+
       const result: SentimentResult = {
         score: response.sentiment.score,
         confidence: response.sentiment.confidence,
@@ -168,35 +181,29 @@ class NewsOracle {
         categories: response.categories,
         impact: response.impact as SentimentResult['impact'],
       };
-      
-      // Add to history
+
       this.sentimentHistory.push(result);
       if (this.sentimentHistory.length > this.maxHistory) {
         this.sentimentHistory.shift();
       }
-      
-      // Update EMA
+
       this.updateSentimentEMA(result.score, result.confidence);
-      
-      // Log significant sentiment
+
       if (result.impact === 'CRITICAL' || result.impact === 'HIGH') {
-        const emoji = result.score > 0 ? '🟢' : result.score < 0 ? '🔴' : '⚪';
+        const indicator = result.score > 0 ? '[BULLISH]' : result.score < 0 ? '[BEARISH]' : '[NEUTRAL]';
         actions.addLog(
           result.score > 0.3 ? 'success' : result.score < -0.3 ? 'error' : 'info',
           'NEWS',
-          `${emoji} ${result.impact}: ${news.headline.slice(0, 60)}...`
+          `${indicator} ${result.impact}: ${news.headline.slice(0, 60)}...`
         );
       }
-      
-      // Notify listeners
+
       this.notifyListeners();
-      
       return result;
-      
+
     } catch (error) {
       actions.addLog('error', 'NEWS', `Sentiment analysis failed: ${error}`);
-      
-      // Return neutral result on error
+
       return {
         score: 0,
         confidence: 0,
@@ -207,77 +214,127 @@ class NewsOracle {
       };
     }
   }
-  
+
+  async fetchRealNews(query?: string): Promise<NewsItem[]> {
+    if (!authState.isAuthenticated) {
+      return [];
+    }
+
+    try {
+      const result = await fetchNews(query);
+
+      if (result.fallback) {
+        actions.addLog('warn', 'NEWS', 'NewsAPI key not configured, using cached/simulated news');
+        return [];
+      }
+
+      const newsItems: NewsItem[] = result.articles.map(article => ({
+        id: `news-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        timestamp: new Date(article.publishedAt).getTime(),
+        source: article.source,
+        headline: article.title,
+        summary: article.description,
+        url: article.url,
+        symbols: ['BTC', 'ETH'],
+        categories: ['MARKET'],
+      }));
+
+      this.cachedNews = newsItems;
+      actions.addLog('success', 'NEWS', `Fetched ${newsItems.length} real news articles`);
+
+      return newsItems;
+    } catch (error) {
+      actions.addLog('error', 'NEWS', `Failed to fetch news: ${error}`);
+      return [];
+    }
+  }
+
+  async analyzeBatchHeadlines(headlines: string[]): Promise<SentimentResult[]> {
+    if (this.isRealMode && authState.isAuthenticated) {
+      const hasLlmKey = authState.apiKeys.some(
+        k => (k.provider === 'OPENAI' || k.provider === 'DEEPSEEK') && k.isActive
+      );
+
+      if (hasLlmKey) {
+        try {
+          const result = await apiAnalyzeSentiment(headlines);
+          return result.results.map(r => ({
+            score: r.score,
+            confidence: r.confidence,
+            magnitude: r.magnitude,
+            keywords: r.keywords,
+            categories: r.categories,
+            impact: r.impact,
+          }));
+        } catch (error) {
+          actions.addLog('warn', 'NEWS', 'Batch analysis failed, using fallback');
+        }
+      }
+    }
+
+    return headlines.map(h => {
+      const response = fallbackSentimentAnalysis(h);
+      return {
+        score: response.sentiment.score,
+        confidence: response.sentiment.confidence,
+        magnitude: response.sentiment.magnitude,
+        keywords: response.keywords,
+        categories: response.categories,
+        impact: response.impact as SentimentResult['impact'],
+      };
+    });
+  }
+
   private updateSentimentEMA(score: number, confidence: number): void {
-    // Confidence-weighted EMA
     const alpha = 0.1 * confidence;
     this.sentimentEMA = alpha * score + (1 - alpha) * this.sentimentEMA;
     this.aggregatedSentiment = this.sentimentEMA;
   }
-  
-  /**
-   * Get current aggregated sentiment score (-1.0 to +1.0)
-   * This is used as environmental pressure for genetic algorithm
-   */
+
   getAggregatedSentiment(): number {
     return this.aggregatedSentiment;
   }
-  
-  /**
-   * Get recent sentiment history
-   */
+
   getSentimentHistory(limit: number = 10): SentimentResult[] {
     return this.sentimentHistory.slice(-limit);
   }
-  
-  /**
-   * Calculate sentiment momentum (rate of change)
-   */
+
   getSentimentMomentum(): number {
     if (this.sentimentHistory.length < 5) return 0;
-    
+
     const recent = this.sentimentHistory.slice(-5);
     const older = this.sentimentHistory.slice(-10, -5);
-    
+
     const recentAvg = recent.reduce((s, r) => s + r.score, 0) / recent.length;
-    const olderAvg = older.length > 0 
-      ? older.reduce((s, r) => s + r.score, 0) / older.length 
+    const olderAvg = older.length > 0
+      ? older.reduce((s, r) => s + r.score, 0) / older.length
       : 0;
-    
+
     return recentAvg - olderAvg;
   }
-  
-  /**
-   * Subscribe to sentiment updates
-   */
+
   subscribe(callback: (sentiment: number) => void): () => void {
     this.listeners.add(callback);
     return () => this.listeners.delete(callback);
   }
-  
+
   private notifyListeners(): void {
     this.listeners.forEach(cb => cb(this.aggregatedSentiment));
   }
-  
-  /**
-   * Reset oracle state
-   */
+
   reset(): void {
     this.sentimentHistory = [];
     this.aggregatedSentiment = 0;
     this.sentimentEMA = 0;
+    this.cachedNews = [];
+  }
+
+  getCachedNews(): NewsItem[] {
+    return this.cachedNews;
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SINGLETON EXPORT
-// ─────────────────────────────────────────────────────────────────────────────
-
 export const newsOracle = new NewsOracle();
-
-// ─────────────────────────────────────────────────────────────────────────────
-// NEWS FEED SIMULATOR
-// ─────────────────────────────────────────────────────────────────────────────
 
 const SIMULATED_HEADLINES = [
   { headline: "Bitcoin ETF sees record inflows as institutional adoption grows", sentiment: 'bullish' },
@@ -297,15 +354,11 @@ const SIMULATED_HEADLINES = [
   { headline: "Stablecoin depegs briefly, sparking market concerns", sentiment: 'bearish' },
 ];
 
-/**
- * Start simulated news feed
- */
 export function startNewsFeedSimulation(): () => void {
   const interval = setInterval(async () => {
-    // Random chance to generate news
     if (Math.random() > 0.7) {
       const template = SIMULATED_HEADLINES[Math.floor(Math.random() * SIMULATED_HEADLINES.length)];
-      
+
       const news: NewsItem = {
         id: `news-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         timestamp: Date.now(),
@@ -314,10 +367,26 @@ export function startNewsFeedSimulation(): () => void {
         symbols: ['BTC', 'ETH'],
         categories: ['MARKET'],
       };
-      
+
       await newsOracle.analyzeSentiment(news);
     }
-  }, 5000); // Check every 5 seconds
-  
+  }, 5000);
+
+  return () => clearInterval(interval);
+}
+
+export async function startRealNewsFeed(): Promise<() => void> {
+  const fetchAndAnalyze = async () => {
+    const news = await newsOracle.fetchRealNews('cryptocurrency bitcoin ethereum');
+    for (const item of news.slice(0, 5)) {
+      await newsOracle.analyzeSentiment(item);
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  };
+
+  await fetchAndAnalyze();
+
+  const interval = setInterval(fetchAndAnalyze, 60000);
+
   return () => clearInterval(interval);
 }
