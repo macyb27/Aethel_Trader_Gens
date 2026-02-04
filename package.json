@@ -4,10 +4,10 @@
   "description": "ÆTHER-TRADER Ω v4.0 - Self-Aware Market Oracle with Quantum-Inspired Trading Intelligence",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:sandbox": "vite --host 0.0.0.0 --port 3000",
+    "dev": "vite --host 0.0.0.0 --port 3000",
+    "dev:local": "vite",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "vite preview --host 0.0.0.0 --port 3000",
     "deploy": "npm run build && wrangler pages deploy dist",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
