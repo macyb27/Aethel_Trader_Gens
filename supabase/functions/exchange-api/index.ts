@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 interface ExchangeRequest {
-  exchange: "BYBIT" | "BINANCE";
+  exchange: "BYBIT" | "BINANCE" | "COINBASE";
   endpoint: string;
   method: "GET" | "POST" | "PUT" | "DELETE";
   params?: Record<string, string>;
@@ -24,6 +24,10 @@ const EXCHANGE_CONFIGS = {
   BINANCE: {
     mainnet: "https://fapi.binance.com",
     testnet: "https://testnet.binancefuture.com",
+  },
+  COINBASE: {
+    mainnet: "https://api.coinbase.com",
+    testnet: "https://api.coinbase.com", // Coinbase uses same endpoint for sandbox (different keys)
   },
 };
 
@@ -43,6 +47,17 @@ function generateBinanceSignature(
   apiSecret: string
 ): string {
   return createHmac("sha256", apiSecret).update(queryString).digest("hex");
+}
+
+function generateCoinbaseSignature(
+  timestamp: string,
+  method: string,
+  path: string,
+  body: string,
+  apiSecret: string
+): string {
+  const message = timestamp + method + path + body;
+  return createHmac("sha256", apiSecret).update(message).digest("hex");
 }
 
 async function getApiKeys(
@@ -149,6 +164,46 @@ async function callBinanceApi(
   });
 }
 
+async function callCoinbaseApi(
+  baseUrl: string,
+  endpoint: string,
+  method: string,
+  apiKey: string,
+  apiSecret: string,
+  body?: Record<string, unknown>
+): Promise<Response> {
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const bodyStr = body ? JSON.stringify(body) : "";
+  
+  const signature = generateCoinbaseSignature(
+    timestamp,
+    method,
+    endpoint,
+    bodyStr,
+    apiSecret
+  );
+
+  const url = `${baseUrl}${endpoint}`;
+
+  const headers: Record<string, string> = {
+    "CB-ACCESS-KEY": apiKey,
+    "CB-ACCESS-SIGN": signature,
+    "CB-ACCESS-TIMESTAMP": timestamp,
+    "Content-Type": "application/json",
+  };
+
+  const fetchOptions: RequestInit = {
+    method,
+    headers,
+  };
+
+  if (body && (method === "POST" || method === "PUT")) {
+    fetchOptions.body = bodyStr;
+  }
+
+  return fetch(url, fetchOptions);
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -209,6 +264,15 @@ Deno.serve(async (req: Request) => {
         keys.apiKey,
         keys.apiSecret || "",
         params,
+        body
+      );
+    } else if (exchange === "COINBASE") {
+      response = await callCoinbaseApi(
+        baseUrl,
+        endpoint,
+        method || "GET",
+        keys.apiKey,
+        keys.apiSecret || "",
         body
       );
     } else {

@@ -10,7 +10,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-export type ApiKeyProvider = 'BYBIT' | 'BINANCE' | 'OPENAI' | 'DEEPSEEK' | 'NEWS_API' | 'ALPHA_VANTAGE';
+export type ApiKeyProvider = 
+  | 'BYBIT' 
+  | 'BINANCE' 
+  | 'COINBASE'
+  | 'ALPACA'
+  | 'FINNHUB'
+  | 'OPENAI' 
+  | 'DEEPSEEK' 
+  | 'NEWS_API' 
+  | 'ALPHA_VANTAGE';
 
 export interface ApiKey {
   id: string;
@@ -90,7 +99,7 @@ export async function addApiKey(
   apiKey: string,
   apiSecret: string | null,
   isTestnet: boolean
-) {
+): Promise<{ data: { id: string } | null; error: Error | null }> {
   const { data, error } = await supabase
     .from('api_keys')
     .insert({
@@ -101,11 +110,11 @@ export async function addApiKey(
       api_secret_encrypted: apiSecret,
       is_testnet: isTestnet,
       is_active: true,
-    })
+    } as any)
     .select('id')
     .single();
 
-  return { data, error };
+  return { data: data as { id: string } | null, error: error as Error | null };
 }
 
 export async function deleteApiKey(keyId: string) {

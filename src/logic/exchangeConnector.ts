@@ -1,8 +1,9 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- * ÆTHER-TRADER Ω v4.0 - MULTI-EXCHANGE CONNECTOR
- * Normalized WebSocket connections for Bybit & Binance
+ * ÆTHER-TRADER Ω v4.1 - MULTI-EXCHANGE CONNECTOR
+ * Normalized WebSocket connections for Bybit, Binance & Coinbase
  * Supports both simulated mode and real API mode
+ * Environment-based configuration without sandbox dependencies
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
@@ -10,12 +11,13 @@ import { actions } from '../store';
 import { crdtStore, NormalizedKline, NormalizedTrade } from './crdt_store';
 import { getBybitTicker, getBinanceTicker, getBybitPositions, getBybitAccountBalance } from '../services/api';
 import { authState } from '../store/auth';
+import { getConfig } from '../lib/config';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPE DEFINITIONS
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type Exchange = 'BYBIT' | 'BINANCE';
+export type Exchange = 'BYBIT' | 'BINANCE' | 'COINBASE';
 
 export interface ExchangeConfig {
   name: Exchange;
@@ -33,25 +35,36 @@ export interface ConnectionState {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// EXCHANGE CONFIGURATIONS
+// EXCHANGE CONFIGURATIONS (Environment-aware)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const EXCHANGE_CONFIGS: Record<Exchange, ExchangeConfig> = {
-  BYBIT: {
-    name: 'BYBIT',
-    wsUrl: 'wss://stream.bybit.com/v5/public/linear',
-    restUrl: 'https://api.bybit.com',
-    reconnectDelay: 5000,
-    heartbeatInterval: 20000,
-  },
-  BINANCE: {
-    name: 'BINANCE',
-    wsUrl: 'wss://fstream.binance.com/ws',
-    restUrl: 'https://fapi.binance.com',
-    reconnectDelay: 5000,
-    heartbeatInterval: 30000,
-  },
-};
+function getExchangeConfigs(): Record<Exchange, ExchangeConfig> {
+  const appConfig = getConfig();
+  
+  return {
+    BYBIT: {
+      name: 'BYBIT',
+      wsUrl: appConfig.exchanges.bybit.wsUrl,
+      restUrl: appConfig.exchanges.bybit.restUrl,
+      reconnectDelay: 5000,
+      heartbeatInterval: 20000,
+    },
+    BINANCE: {
+      name: 'BINANCE',
+      wsUrl: appConfig.exchanges.binance.wsUrl,
+      restUrl: appConfig.exchanges.binance.restUrl,
+      reconnectDelay: 5000,
+      heartbeatInterval: 30000,
+    },
+    COINBASE: {
+      name: 'COINBASE',
+      wsUrl: appConfig.exchanges.coinbase.wsUrl,
+      restUrl: appConfig.exchanges.coinbase.restUrl,
+      reconnectDelay: 5000,
+      heartbeatInterval: 30000,
+    },
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NORMALIZATION FUNCTIONS
@@ -149,6 +162,43 @@ function normalizeBinanceTrade(data: any): NormalizedTrade {
   };
 }
 
+/**
+ * Normalize Coinbase kline data to common format
+ */
+function normalizeCoinbaseKline(data: any, symbol: string, interval: string): NormalizedKline {
+  return {
+    timestamp: parseInt(data.start) * 1000 || Date.now(),
+    exchange: 'COINBASE',
+    symbol: symbol.replace('-', ''),
+    interval,
+    open: parseFloat(data.open || '0'),
+    high: parseFloat(data.high || '0'),
+    low: parseFloat(data.low || '0'),
+    close: parseFloat(data.close || '0'),
+    volume: parseFloat(data.volume || '0'),
+    trades: 0,
+  };
+}
+
+/**
+ * Normalize Coinbase trade data
+ */
+function normalizeCoinbaseTrade(data: any): NormalizedTrade {
+  return {
+    id: data.trade_id || String(Date.now()),
+    orderId: '',
+    symbol: (data.product_id || '').replace('-', ''),
+    exchange: 'COINBASE',
+    side: data.side?.toLowerCase() === 'sell' ? 'sell' : 'buy',
+    price: parseFloat(data.price || '0'),
+    quantity: parseFloat(data.size || data.last_size || '0'),
+    fee: 0,
+    feeCurrency: 'USD',
+    timestamp: data.time ? new Date(data.time).getTime() : Date.now(),
+    isMaker: false,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // EXCHANGE CONNECTOR CLASS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -172,7 +222,8 @@ class ExchangeConnector {
   private realApiPollingTimer: number | null = null;
 
   constructor(exchange: Exchange) {
-    this.config = EXCHANGE_CONFIGS[exchange];
+    const configs = getExchangeConfigs();
+    this.config = configs[exchange];
   }
 
   setRealMode(enabled: boolean): void {
@@ -443,6 +494,17 @@ class ExchangeConnector {
         op: 'subscribe',
         args: [channel],
       };
+    } else if (this.config.name === 'COINBASE') {
+      // Coinbase uses a different subscription format
+      const productId = channel.split('.')[0] || 'BTC-USD';
+      const channelType = channel.includes('ticker') ? 'ticker' : 
+                          channel.includes('trade') ? 'market_trades' : 
+                          'candles';
+      message = {
+        type: 'subscribe',
+        product_ids: [productId],
+        channel: channelType,
+      };
     } else {
       message = {
         method: 'SUBSCRIBE',
@@ -464,6 +526,16 @@ class ExchangeConnector {
         op: 'unsubscribe',
         args: [channel],
       };
+    } else if (this.config.name === 'COINBASE') {
+      const productId = channel.split('.')[0] || 'BTC-USD';
+      const channelType = channel.includes('ticker') ? 'ticker' : 
+                          channel.includes('trade') ? 'market_trades' : 
+                          'candles';
+      message = {
+        type: 'unsubscribe',
+        product_ids: [productId],
+        channel: channelType,
+      };
     } else {
       message = {
         method: 'UNSUBSCRIBE',
@@ -480,7 +552,7 @@ class ExchangeConnector {
       const data = JSON.parse(rawData);
       
       // Handle heartbeat/pong
-      if (data.op === 'pong' || data.pong || data.result === null) {
+      if (data.op === 'pong' || data.pong || data.result === null || data.type === 'heartbeats') {
         this.state.lastHeartbeat = Date.now();
         return;
       }
@@ -488,6 +560,8 @@ class ExchangeConnector {
       // Route to appropriate handler
       if (this.config.name === 'BYBIT') {
         this.handleBybitMessage(data);
+      } else if (this.config.name === 'COINBASE') {
+        this.handleCoinbaseMessage(data);
       } else {
         this.handleBinanceMessage(data);
       }
@@ -542,6 +616,71 @@ class ExchangeConnector {
       const stream = `${data.s.toLowerCase()}@trade`;
       const handler = this.messageHandlers.get(stream);
       if (handler) handler(normalized);
+    }
+  }
+
+  private handleCoinbaseMessage(data: any): void {
+    const channel = data.channel || '';
+    const events = data.events || [];
+    
+    for (const event of events) {
+      if (channel === 'candles') {
+        const candles = event.candles || [];
+        for (const candle of candles) {
+          const productId = candle.product_id || data.product_id || 'BTC-USD';
+          const normalized = normalizeCoinbaseKline(candle, productId, '1m');
+          
+          crdtStore.addKline(normalized.symbol, normalized.interval, normalized);
+          
+          const handlerKey = `${productId}.candles`;
+          const handler = this.messageHandlers.get(handlerKey);
+          if (handler) handler(normalized);
+        }
+      } else if (channel === 'market_trades') {
+        const trades = event.trades || [];
+        for (const trade of trades) {
+          const normalized = normalizeCoinbaseTrade(trade);
+          crdtStore.addTrade(normalized);
+          
+          const handlerKey = `${trade.product_id}.trades`;
+          const handler = this.messageHandlers.get(handlerKey);
+          if (handler) handler(normalized);
+        }
+      } else if (channel === 'ticker') {
+        const tickers = event.tickers || [];
+        for (const ticker of tickers) {
+          const productId = ticker.product_id || 'BTC-USD';
+          const kline: NormalizedKline = {
+            timestamp: Date.now(),
+            exchange: 'COINBASE',
+            symbol: productId.replace('-', ''),
+            interval: '1m',
+            open: parseFloat(ticker.price || '0'),
+            high: parseFloat(ticker.high_24_h || ticker.price || '0'),
+            low: parseFloat(ticker.low_24_h || ticker.price || '0'),
+            close: parseFloat(ticker.price || '0'),
+            volume: parseFloat(ticker.volume_24_h || '0'),
+            trades: 0,
+          };
+          
+          crdtStore.addKline(kline.symbol, kline.interval, kline);
+          
+          // Update market data
+          actions.updateMarketData(kline.symbol, {
+            symbol: kline.symbol,
+            price: kline.close,
+            change24h: parseFloat(ticker.price_percent_chg_24_h || '0'),
+            volume24h: kline.volume,
+            high24h: kline.high,
+            low24h: kline.low,
+            lastUpdate: Date.now(),
+          });
+          
+          const handlerKey = `${productId}.ticker`;
+          const handler = this.messageHandlers.get(handlerKey);
+          if (handler) handler(kline);
+        }
+      }
     }
   }
   

@@ -10,6 +10,9 @@ interface SettingsPanelProps {
 const API_PROVIDERS: { id: ApiKeyProvider; name: string; description: string; needsSecret: boolean }[] = [
   { id: 'BYBIT', name: 'Bybit', description: 'Cryptocurrency exchange for live trading', needsSecret: true },
   { id: 'BINANCE', name: 'Binance', description: 'Cryptocurrency exchange for live trading', needsSecret: true },
+  { id: 'COINBASE', name: 'Coinbase', description: 'Advanced Trade API for crypto trading', needsSecret: true },
+  { id: 'ALPACA', name: 'Alpaca', description: 'Commission-free stock & crypto trading', needsSecret: true },
+  { id: 'FINNHUB', name: 'Finnhub', description: 'Real-time market data and news', needsSecret: false },
   { id: 'OPENAI', name: 'OpenAI', description: 'GPT models for sentiment analysis', needsSecret: false },
   { id: 'DEEPSEEK', name: 'DeepSeek', description: 'Alternative LLM for sentiment analysis', needsSecret: false },
   { id: 'NEWS_API', name: 'NewsAPI', description: 'Real-time news feed for market sentiment', needsSecret: false },
