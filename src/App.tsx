@@ -172,7 +172,7 @@ function generateMockPopulation(count: number): StrategyDNA[] {
 
 const App: Component = () => {
   const [showAuthModal, setShowAuthModal] = createSignal(false);
-  const [showSettings, setShowSettings] = createSignal(false);
+  const [showSettings, setShowSettings] = createSignal(true);
   let newsFeedCleanup: (() => void) | null = null;
   let realtimeCleanup: (() => void) | null = null;
 
