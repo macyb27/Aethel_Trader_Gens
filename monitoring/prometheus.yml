@@ -1,0 +1,55 @@
+# Prometheus configuration for ÆTHER-TRADER Ω monitoring
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'aether-trader'
+    environment: 'production'
+
+# Alertmanager configuration (optional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Scrape configurations
+scrape_configs:
+  # Application metrics
+  - job_name: 'aether-trader'
+    static_configs:
+      - targets: ['aether-trader:3000']
+        labels:
+          service: 'api-server'
+    
+  # Node exporter (system metrics)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['localhost:9100']
+        labels:
+          service: 'node-exporter'
+    
+  # Docker metrics
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['localhost:9323']
+        labels:
+          service: 'docker'
+    
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+        labels:
+          service: 'redis'
+    
+  # PostgreSQL metrics
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+        labels:
+          service: 'postgres'
+
+# Recording rules
+rule_files:
+  - 'rules/*.yml'

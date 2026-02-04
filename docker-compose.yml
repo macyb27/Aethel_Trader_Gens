@@ -1,0 +1,172 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# ÆTHER-TRADER Ω v4.0 - Docker Compose Configuration
+# Complete production-ready deployment stack
+# ═══════════════════════════════════════════════════════════════════════════
+
+version: '3.8'
+
+services:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Main Application (Web App + API Server)
+  # ─────────────────────────────────────────────────────────────────────────
+  aether-trader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aether-trader-app
+    ports:
+      - "8080:80"      # Web interface
+      - "3000:3000"    # API server
+    environment:
+      # Application
+      - NODE_ENV=production
+      - PORT=3000
+      
+      # API Keys (set these in .env file)
+      - ALPACA_API_KEY=${ALPACA_API_KEY:-}
+      - ALPACA_API_SECRET=${ALPACA_API_SECRET:-}
+      - ALPACA_BASE_URL=${ALPACA_BASE_URL:-https://paper-api.alpaca.markets}
+      
+      - FINNHUB_API_KEY=${FINNHUB_API_KEY:-}
+      
+      - COINBASE_API_KEY=${COINBASE_API_KEY:-}
+      - COINBASE_API_SECRET=${COINBASE_API_SECRET:-}
+      
+      - KRAKEN_API_KEY=${KRAKEN_API_KEY:-}
+      - KRAKEN_API_SECRET=${KRAKEN_API_SECRET:-}
+      
+      - BYBIT_API_KEY=${BYBIT_API_KEY:-}
+      - BYBIT_API_SECRET=${BYBIT_API_SECRET:-}
+      
+      # Supabase
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      
+      # Risk Management
+      - MAX_LOSS_PER_TRADE=${MAX_LOSS_PER_TRADE:-1.0}
+      - MAX_POSITION_SIZE=${MAX_POSITION_SIZE:-5.0}
+      - MAX_DRAWDOWN=${MAX_DRAWDOWN:-10.0}
+      - STOP_LOSS_PERCENT=${STOP_LOSS_PERCENT:-1.0}
+      - TRADING_HOURS_ONLY=${TRADING_HOURS_ONLY:-true}
+      - HALT_ON_HIGH_IMPACT_NEWS=${HALT_ON_HIGH_IMPACT_NEWS:-true}
+      - VOLATILITY_HALT_THRESHOLD=${VOLATILITY_HALT_THRESHOLD:-30}
+    volumes:
+      - app-data:/app/data
+      - logs:/var/log
+    restart: unless-stopped
+    networks:
+      - aether-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Redis (Optional: for caching and session management)
+  # ─────────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: aether-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-aether_redis_pass}
+    restart: unless-stopped
+    networks:
+      - aether-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # PostgreSQL (Optional: local database alternative to Supabase)
+  # ─────────────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: aether-postgres
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-aether_trader}
+      - POSTGRES_USER=${POSTGRES_USER:-aether_admin}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-change_this_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    networks:
+      - aether-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aether_admin}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Monitoring: Prometheus (Optional)
+  # ─────────────────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: aether-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+    networks:
+      - aether-network
+    profiles:
+      - monitoring
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Monitoring: Grafana (Optional)
+  # ─────────────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: aether-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - aether-network
+    profiles:
+      - monitoring
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Networks
+# ─────────────────────────────────────────────────────────────────────────────
+networks:
+  aether-network:
+    driver: bridge
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Volumes
+# ─────────────────────────────────────────────────────────────────────────────
+volumes:
+  app-data:
+    driver: local
+  logs:
+    driver: local
+  redis-data:
+    driver: local
+  postgres-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
