@@ -16,7 +16,6 @@ export interface ApiKey {
   id: string;
   provider: ApiKeyProvider;
   keyName: string;
-  isTestnet: boolean;
   isActive: boolean;
   lastUsedAt: string | null;
   createdAt: string;
@@ -66,7 +65,7 @@ export async function upsertUserSettings(userId: string, settings: Partial<UserS
 export async function getApiKeys(userId: string): Promise<ApiKey[]> {
   const { data, error } = await supabase
     .from('api_keys')
-    .select('id, provider, key_name, is_testnet, is_active, last_used_at, created_at')
+    .select('id, provider, key_name, is_active, last_used_at, created_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
@@ -76,7 +75,6 @@ export async function getApiKeys(userId: string): Promise<ApiKey[]> {
     id: key.id,
     provider: key.provider as ApiKeyProvider,
     keyName: key.key_name,
-    isTestnet: key.is_testnet || false,
     isActive: key.is_active || true,
     lastUsedAt: key.last_used_at,
     createdAt: key.created_at,
@@ -88,8 +86,7 @@ export async function addApiKey(
   provider: ApiKeyProvider,
   keyName: string,
   apiKey: string,
-  apiSecret: string | null,
-  isTestnet: boolean
+  apiSecret: string | null
 ) {
   const { data, error } = await supabase
     .from('api_keys')
@@ -99,7 +96,6 @@ export async function addApiKey(
       key_name: keyName,
       api_key_encrypted: apiKey,
       api_secret_encrypted: apiSecret,
-      is_testnet: isTestnet,
       is_active: true,
     })
     .select('id')

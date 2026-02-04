@@ -23,7 +23,6 @@ const SettingsPanel: Component<SettingsPanelProps> = (props) => {
   const [keyName, setKeyName] = createSignal('');
   const [apiKey, setApiKey] = createSignal('');
   const [apiSecret, setApiSecret] = createSignal('');
-  const [isTestnet, setIsTestnet] = createSignal(false);
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal('');
 
@@ -44,8 +43,7 @@ const SettingsPanel: Component<SettingsPanelProps> = (props) => {
       selectedProvider(),
       keyName() || `${selectedProvider()} Key`,
       apiKey(),
-      currentProvider()?.needsSecret ? apiSecret() : null,
-      isTestnet()
+      currentProvider()?.needsSecret ? apiSecret() : null
     );
 
     if (saveError) {
@@ -55,7 +53,6 @@ const SettingsPanel: Component<SettingsPanelProps> = (props) => {
         id: data.id,
         provider: selectedProvider(),
         keyName: keyName() || `${selectedProvider()} Key`,
-        isTestnet: isTestnet(),
         isActive: true,
         lastUsedAt: null,
         createdAt: new Date().toISOString(),
@@ -87,7 +84,6 @@ const SettingsPanel: Component<SettingsPanelProps> = (props) => {
     setKeyName('');
     setApiKey('');
     setApiSecret('');
-    setIsTestnet(false);
     setError('');
   };
 
@@ -155,9 +151,6 @@ const SettingsPanel: Component<SettingsPanelProps> = (props) => {
                         <div class="api-key-info">
                           <div class="api-key-header">
                             <span class="api-key-provider">{key.provider}</span>
-                            <Show when={key.isTestnet}>
-                              <span class="api-key-badge testnet">Testnet</span>
-                            </Show>
                             <span
                               class="api-key-badge"
                               classList={{ active: key.isActive, inactive: !key.isActive }}
@@ -248,19 +241,6 @@ const SettingsPanel: Component<SettingsPanelProps> = (props) => {
                           onInput={(e) => setApiSecret(e.currentTarget.value)}
                           placeholder="Enter your API secret"
                         />
-                      </div>
-                    </Show>
-
-                    <Show when={selectedProvider() === 'BYBIT' || selectedProvider() === 'BINANCE'}>
-                      <div class="form-group form-checkbox">
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={isTestnet()}
-                            onChange={(e) => setIsTestnet(e.currentTarget.checked)}
-                          />
-                          <span>Use Testnet (recommended for testing)</span>
-                        </label>
                       </div>
                     </Show>
 

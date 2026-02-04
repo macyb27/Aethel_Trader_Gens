@@ -194,6 +194,68 @@ export async function getBybitPositions(): Promise<Position[]> {
     }));
 }
 
+export interface AlphaVantageRequest {
+  function: string;
+  params?: Record<string, string>;
+}
+
+export interface AlphaVantageQuote {
+  symbol: string;
+  open: number;
+  high: number;
+  low: number;
+  price: number;
+  volume: number;
+  latestTradingDay: string;
+  previousClose: number;
+  change: number;
+  changePercent: number;
+}
+
+export async function callAlphaVantage<T = unknown>(request: AlphaVantageRequest): Promise<T> {
+  const headers = await getAuthHeaders();
+
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/alpha-vantage`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: response.statusText }));
+    throw new Error(error.error || 'Alpha Vantage call failed');
+  }
+
+  return response.json();
+}
+
+export async function getAlphaVantageQuote(symbol: string): Promise<AlphaVantageQuote> {
+  const response = await callAlphaVantage<{ 'Global Quote'?: Record<string, string> }>({
+    function: 'GLOBAL_QUOTE',
+    params: { symbol },
+  });
+
+  const quote = response['Global Quote'];
+  if (!quote || !quote['01. symbol']) {
+    throw new Error('Alpha Vantage quote not available');
+  }
+
+  const parseNumber = (value?: string) => (value ? parseFloat(value.replace('%', '')) : 0);
+
+  return {
+    symbol: quote['01. symbol'],
+    open: parseNumber(quote['02. open']),
+    high: parseNumber(quote['03. high']),
+    low: parseNumber(quote['04. low']),
+    price: parseNumber(quote['05. price']),
+    volume: parseNumber(quote['06. volume']),
+    latestTradingDay: quote['07. latest trading day'] || '',
+    previousClose: parseNumber(quote['08. previous close']),
+    change: parseNumber(quote['09. change']),
+    changePercent: parseNumber(quote['10. change percent']),
+  };
+}
+
 export interface NewsArticle {
   title: string;
   description: string;

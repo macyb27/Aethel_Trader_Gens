@@ -177,11 +177,6 @@
   font-weight: 600;
 }
 
-.api-key-badge.testnet {
-  background: rgba(255, 170, 0, 0.2);
-  color: #ffaa00;
-}
-
 .api-key-badge.active {
   background: rgba(0, 255, 136, 0.2);
   color: #00ff88;

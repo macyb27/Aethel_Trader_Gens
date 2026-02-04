@@ -19,7 +19,6 @@
       - `key_name` (text) - User-friendly name
       - `api_key_encrypted` (text) - Encrypted API key
       - `api_secret_encrypted` (text) - Encrypted API secret (if applicable)
-      - `is_testnet` (boolean) - Whether this is a testnet key
       - `is_active` (boolean) - Whether key is currently active
       - `last_used_at` (timestamptz)
       - `created_at` (timestamptz)
@@ -111,7 +110,6 @@ CREATE TABLE IF NOT EXISTS api_keys (
   key_name text NOT NULL DEFAULT '',
   api_key_encrypted text NOT NULL,
   api_secret_encrypted text,
-  is_testnet boolean DEFAULT false,
   is_active boolean DEFAULT true,
   last_used_at timestamptz,
   created_at timestamptz DEFAULT now(),

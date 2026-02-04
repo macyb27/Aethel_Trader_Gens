@@ -16,15 +16,9 @@ interface ExchangeRequest {
   body?: Record<string, unknown>;
 }
 
-const EXCHANGE_CONFIGS = {
-  BYBIT: {
-    mainnet: "https://api.bybit.com",
-    testnet: "https://api-testnet.bybit.com",
-  },
-  BINANCE: {
-    mainnet: "https://fapi.binance.com",
-    testnet: "https://testnet.binancefuture.com",
-  },
+const EXCHANGE_BASE_URLS = {
+  BYBIT: "https://api.bybit.com",
+  BINANCE: "https://fapi.binance.com",
 };
 
 function generateBybitSignature(
@@ -52,7 +46,7 @@ async function getApiKeys(
 ) {
   const { data, error } = await supabase
     .from("api_keys")
-    .select("api_key_encrypted, api_secret_encrypted, is_testnet")
+    .select("api_key_encrypted, api_secret_encrypted")
     .eq("user_id", userId)
     .eq("provider", exchange)
     .eq("is_active", true)
@@ -66,7 +60,6 @@ async function getApiKeys(
   return {
     apiKey: data.api_key_encrypted,
     apiSecret: data.api_secret_encrypted,
-    isTestnet: data.is_testnet,
   };
 }
 
@@ -195,9 +188,7 @@ Deno.serve(async (req: Request) => {
     );
 
     const keys = await getApiKeys(serviceClient, user.id, exchange);
-    const baseUrl = keys.isTestnet
-      ? EXCHANGE_CONFIGS[exchange].testnet
-      : EXCHANGE_CONFIGS[exchange].mainnet;
+    const baseUrl = EXCHANGE_BASE_URLS[exchange];
 
     let response: Response;
 

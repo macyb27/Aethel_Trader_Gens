@@ -41,7 +41,6 @@ export interface Database {
           key_name: string;
           api_key_encrypted: string;
           api_secret_encrypted: string | null;
-          is_testnet: boolean | null;
           is_active: boolean | null;
           last_used_at: string | null;
           created_at: string;
@@ -53,7 +52,6 @@ export interface Database {
           key_name?: string;
           api_key_encrypted: string;
           api_secret_encrypted?: string | null;
-          is_testnet?: boolean | null;
           is_active?: boolean | null;
           last_used_at?: string | null;
           created_at?: string;
@@ -65,7 +63,6 @@ export interface Database {
           key_name?: string;
           api_key_encrypted?: string;
           api_secret_encrypted?: string | null;
-          is_testnet?: boolean | null;
           is_active?: boolean | null;
           last_used_at?: string | null;
           created_at?: string;

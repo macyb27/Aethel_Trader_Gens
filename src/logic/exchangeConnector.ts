@@ -503,8 +503,10 @@ class ExchangeConnector {
     if (topic.includes('kline')) {
       const klineData = data.data?.[0];
       if (klineData) {
-        const [symbol, interval] = topic.split('.');
-        const normalized = normalizeBybitKline(klineData, symbol.replace('kline.', ''), interval);
+        const parts = topic.split('.');
+        const interval = parts.length > 1 ? parts[1] : '';
+        const symbol = parts.length > 2 ? parts.slice(2).join('.') : topic.replace('kline.', '');
+        const normalized = normalizeBybitKline(klineData, symbol, interval);
         
         crdtStore.addKline(normalized.symbol, normalized.interval, normalized);
         
