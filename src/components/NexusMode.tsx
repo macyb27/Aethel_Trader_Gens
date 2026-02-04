@@ -6,7 +6,7 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { Component, onMount, onCleanup, createSignal, Show } from 'solid-js';
+import { Component, onMount, onCleanup, Show } from 'solid-js';
 import * as THREE from 'three';
 import { state, actions, GSMNode } from '../store';
 

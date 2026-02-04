@@ -6,9 +6,8 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export interface Database {
-  public: {
-    Tables: {
+export type PublicSchema = {
+  Tables: {
       user_settings: {
         Row: {
           id: string;
@@ -339,10 +338,12 @@ export interface Database {
         };
         Relationships: [];
       };
-    };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
-    Enums: Record<string, never>;
-    CompositeTypes: Record<string, never>;
   };
-}
+  Views: Record<string, never>;
+  Functions: Record<string, never>;
+  Enums: Record<string, never>;
+  CompositeTypes: Record<string, never>;
+};
+
+// Supabase expects the top-level `Database` type to be compatible with `Record<string, GenericSchema>`.
+export type Database = { public: PublicSchema } & Record<string, PublicSchema>;

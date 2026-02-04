@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from './database.types';
+import type { Database, Json } from './database.types';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -174,7 +174,7 @@ export async function addTradingLog(
   level: string,
   source: string,
   message: string,
-  data?: Record<string, unknown>
+  data?: Json
 ) {
   const { error } = await supabase
     .from('trading_logs')
@@ -183,7 +183,7 @@ export async function addTradingLog(
       level,
       source,
       message,
-      data: data || null,
+      data: data ?? null,
     });
 
   return { error };
