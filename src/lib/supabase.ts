@@ -39,26 +39,29 @@ export async function getUserSettings(userId: string): Promise<UserSettings | nu
 
   if (error || !data) return null;
 
+  const row = data as Database['public']['Tables']['user_settings']['Row'];
   return {
-    theme: data.theme || 'dark',
-    defaultExchange: data.default_exchange || 'BYBIT',
-    riskTolerance: data.risk_tolerance || 0.5,
-    autoTrade: data.auto_trade || false,
-    notificationsEnabled: data.notifications_enabled || true,
+    theme: row.theme || 'dark',
+    defaultExchange: row.default_exchange || 'BYBIT',
+    riskTolerance: row.risk_tolerance || 0.5,
+    autoTrade: row.auto_trade || false,
+    notificationsEnabled: row.notifications_enabled || true,
   };
 }
 
 export async function upsertUserSettings(userId: string, settings: Partial<UserSettings>) {
+  const updateData: Database['public']['Tables']['user_settings']['Update'] = {
+    id: userId,
+    theme: settings.theme,
+    default_exchange: settings.defaultExchange,
+    risk_tolerance: settings.riskTolerance,
+    auto_trade: settings.autoTrade,
+    notifications_enabled: settings.notificationsEnabled,
+  };
+  
   const { error } = await supabase
     .from('user_settings')
-    .upsert({
-      id: userId,
-      theme: settings.theme,
-      default_exchange: settings.defaultExchange,
-      risk_tolerance: settings.riskTolerance,
-      auto_trade: settings.autoTrade,
-      notifications_enabled: settings.notificationsEnabled,
-    });
+    .upsert(updateData as any);
 
   return { error };
 }
@@ -72,7 +75,7 @@ export async function getApiKeys(userId: string): Promise<ApiKey[]> {
 
   if (error || !data) return [];
 
-  return data.map((key) => ({
+  return (data as any[]).map((key: any) => ({
     id: key.id,
     provider: key.provider as ApiKeyProvider,
     keyName: key.key_name,
@@ -90,22 +93,24 @@ export async function addApiKey(
   apiKey: string,
   apiSecret: string | null,
   isTestnet: boolean
-) {
+): Promise<{ data: { id: string } | null; error: any }> {
+  const insertData: Database['public']['Tables']['api_keys']['Insert'] = {
+    user_id: userId,
+    provider,
+    key_name: keyName,
+    api_key_encrypted: apiKey,
+    api_secret_encrypted: apiSecret,
+    is_testnet: isTestnet,
+    is_active: true,
+  };
+
   const { data, error } = await supabase
     .from('api_keys')
-    .insert({
-      user_id: userId,
-      provider,
-      key_name: keyName,
-      api_key_encrypted: apiKey,
-      api_secret_encrypted: apiSecret,
-      is_testnet: isTestnet,
-      is_active: true,
-    })
+    .insert(insertData as any)
     .select('id')
     .single();
 
-  return { data, error };
+  return { data: data as { id: string } | null, error };
 }
 
 export async function deleteApiKey(keyId: string) {
@@ -118,9 +123,14 @@ export async function deleteApiKey(keyId: string) {
 }
 
 export async function toggleApiKey(keyId: string, isActive: boolean) {
+  const updateData: Database['public']['Tables']['api_keys']['Update'] = {
+    is_active: isActive
+  };
+  
   const { error } = await supabase
     .from('api_keys')
-    .update({ is_active: isActive })
+    // @ts-ignore - Supabase type inference issue
+    .update(updateData)
     .eq('id', keyId);
 
   return { error };
@@ -143,26 +153,28 @@ export async function saveStrategy(userId: string, strategy: {
   entanglementScore: number;
   isActive: boolean;
 }) {
+  const insertData: Database['public']['Tables']['strategies']['Insert'] = {
+    user_id: userId,
+    genome_id: strategy.genomeId,
+    genome_string: strategy.genomeString,
+    generation: strategy.generation,
+    sharpe_ratio: strategy.sharpeRatio,
+    sortino_ratio: strategy.sortinoRatio,
+    max_drawdown: strategy.maxDrawdown,
+    win_rate: strategy.winRate,
+    profit_factor: strategy.profitFactor,
+    total_trades: strategy.totalTrades,
+    risk_level: strategy.riskLevel,
+    time_horizon: strategy.timeHorizon,
+    trend_bias: strategy.trendBias,
+    volatility_affinity: strategy.volatilityAffinity,
+    entanglement_score: strategy.entanglementScore,
+    is_active: strategy.isActive,
+  };
+
   const { data, error } = await supabase
     .from('strategies')
-    .upsert({
-      user_id: userId,
-      genome_id: strategy.genomeId,
-      genome_string: strategy.genomeString,
-      generation: strategy.generation,
-      sharpe_ratio: strategy.sharpeRatio,
-      sortino_ratio: strategy.sortinoRatio,
-      max_drawdown: strategy.maxDrawdown,
-      win_rate: strategy.winRate,
-      profit_factor: strategy.profitFactor,
-      total_trades: strategy.totalTrades,
-      risk_level: strategy.riskLevel,
-      time_horizon: strategy.timeHorizon,
-      trend_bias: strategy.trendBias,
-      volatility_affinity: strategy.volatilityAffinity,
-      entanglement_score: strategy.entanglementScore,
-      is_active: strategy.isActive,
-    })
+    .upsert(insertData as any)
     .select('id')
     .single();
 
@@ -176,15 +188,17 @@ export async function addTradingLog(
   message: string,
   data?: Record<string, unknown>
 ) {
+  const insertData: Database['public']['Tables']['trading_logs']['Insert'] = {
+    user_id: userId,
+    level,
+    source,
+    message,
+    data: data || null,
+  };
+
   const { error } = await supabase
     .from('trading_logs')
-    .insert({
-      user_id: userId,
-      level,
-      source,
-      message,
-      data: data || null,
-    });
+    .insert(insertData as any);
 
   return { error };
 }
@@ -251,7 +265,7 @@ export async function getPaymentMethods(userId: string): Promise<PaymentMethod[]
 
   if (error || !data) return [];
 
-  return data.map((pm) => ({
+  return (data as any[]).map((pm: any) => ({
     id: pm.id,
     type: pm.type as PaymentMethodType,
     provider: pm.provider,
@@ -272,18 +286,20 @@ export async function addPaymentMethod(
   accountIdentifier: string,
   currency: Currency
 ) {
+  const insertData: Database['public']['Tables']['payment_methods']['Insert'] = {
+    user_id: userId,
+    type,
+    provider,
+    name,
+    account_identifier: accountIdentifier,
+    currency,
+    is_verified: false,
+    is_active: true,
+  };
+
   const { data, error } = await supabase
     .from('payment_methods')
-    .insert({
-      user_id: userId,
-      type,
-      provider,
-      name,
-      account_identifier: accountIdentifier,
-      currency,
-      is_verified: false,
-      is_active: true,
-    })
+    .insert(insertData as any)
     .select('id')
     .single();
 
@@ -307,7 +323,7 @@ export async function getWalletBalances(userId: string): Promise<WalletBalance[]
 
   if (error || !data) return [];
 
-  return data.map((wb) => ({
+  return (data as any[]).map((wb: any) => ({
     id: wb.id,
     currency: wb.currency as Currency,
     balance: parseFloat(wb.balance as string) || 0,
@@ -329,7 +345,7 @@ export async function getTransactions(userId: string, limit = 50): Promise<Trans
 
   if (error || !data) return [];
 
-  return data.map((tx) => ({
+  return (data as any[]).map((tx: any) => ({
     id: tx.id,
     type: tx.type as TransactionType,
     currency: tx.currency as Currency,
@@ -352,18 +368,20 @@ export async function createTransaction(
   paymentMethodId: string | null,
   description: string
 ) {
+  const insertData: Database['public']['Tables']['transactions']['Insert'] = {
+    user_id: userId,
+    type,
+    currency,
+    amount,
+    fee: 0,
+    status: 'PENDING',
+    payment_method_id: paymentMethodId,
+    description,
+  };
+
   const { data, error } = await supabase
     .from('transactions')
-    .insert({
-      user_id: userId,
-      type,
-      currency,
-      amount,
-      fee: 0,
-      status: 'PENDING',
-      payment_method_id: paymentMethodId,
-      description,
-    })
+    .insert(insertData as any)
     .select('id')
     .single();
 

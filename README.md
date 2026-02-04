@@ -134,7 +134,7 @@ interface GSMNode {
 ### Local Development
 ```bash
 npm install
-npm run dev:sandbox
+npm run dev
 ```
 
 ### Cloudflare Pages

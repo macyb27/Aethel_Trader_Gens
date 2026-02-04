@@ -6,7 +6,7 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { Component, onMount, onCleanup, createSignal, Show } from 'solid-js';
+import { Component, onMount, onCleanup, Show } from 'solid-js';
 import * as THREE from 'three';
 import { state, actions, GSMNode } from '../store';
 
@@ -21,7 +21,7 @@ class GSMSceneManager {
   private grid: THREE.GridHelper | null = null;
   private cage: THREE.LineSegments | null = null;
   private nodes: Map<string, THREE.Mesh> = new Map();
-  private selectedNode: THREE.Mesh | null = null;
+  // private selectedNode: THREE.Mesh | null = null; // Reserved for future interaction features
   private raycaster: THREE.Raycaster;
   private mouse: THREE.Vector2;
   private animationId: number | null = null;
@@ -317,14 +317,16 @@ class GSMSceneManager {
 const NexusMode: Component = () => {
   let containerRef: HTMLDivElement | undefined;
   let sceneManager: GSMSceneManager | null = null;
-  const [isInitialized, setIsInitialized] = createSignal(false);
-  const [hoveredNode, setHoveredNode] = createSignal<GSMNode | null>(null);
+  // Reserved for future initialization tracking
+  // const [isInitialized, setIsInitialized] = createSignal(false);
+  // Reserved for future hover interactions
+  // const [hoveredNode, setHoveredNode] = createSignal<GSMNode | null>(null);
   
   onMount(() => {
     if (containerRef) {
       sceneManager = new GSMSceneManager(containerRef);
       sceneManager.start();
-      setIsInitialized(true);
+      // setIsInitialized(true); // Reserved for future initialization tracking
       
       // Initial node update
       sceneManager.updateNodes(state.gsmNodes);

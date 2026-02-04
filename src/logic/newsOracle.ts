@@ -120,7 +120,7 @@ class NewsOracle {
   private sentimentEMA: number = 0;
   private listeners: Set<(sentiment: number) => void> = new Set();
   private isRealMode: boolean = false;
-  private newsFeedInterval: number | null = null;
+  // private newsFeedInterval: number | null = null; // Reserved for future periodic news updates
   private cachedNews: NewsItem[] = [];
 
   setRealMode(enabled: boolean): void {

@@ -1,62 +1,84 @@
 # Dependencies
 node_modules/
+.pnp
+.pnp.js
 
-# Build outputs
+# Testing
+coverage/
+*.lcov
+.nyc_output
+
+# Production
 dist/
-.output/
+build/
+out/
 
-# Tauri
-src-tauri/target/
-src-tauri/Cargo.lock
+# Misc
+.DS_Store
+*.pem
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
 # Environment variables
 .env
 .env.local
-.env.*.local
-.dev.vars
+.env.development.local
+.env.test.local
+.env.production.local
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# OS
-.DS_Store
-Thumbs.db
+# Tauri
+src-tauri/target/
+src-tauri/Cargo.lock
 
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Cache
-.cache/
-.parcel-cache/
-.turbo/
+# Vite
 .vite/
-.wrangler/
+node_modules/.vite/
 
-# PM2
-.pm2/
-pids/
+# Cloudflare
+.dev.vars
+wrangler.toml
 
-# Test coverage
-coverage/
+# Mobile
+mobile/.expo/
+mobile/dist/
+mobile/node_modules/
+mobile/.env
 
-# SQLite databases
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Database
 *.db
-*.db-journal
 *.sqlite
 *.sqlite3
 
-# Backup files
-*.backup
-*.bak
-*.tar.gz
-*.zip
+# Logs
+logs/
+*.log
 
-# Misc
-.eslintcache
-.stylelintcache
+# OS
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
