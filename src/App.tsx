@@ -6,7 +6,7 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { Component, Show, onMount, onCleanup, lazy, Suspense, createSignal } from 'solid-js';
+import { Component, Show, onMount, onCleanup, lazy, Suspense, createSignal, createEffect } from 'solid-js';
 import { state, actions, StrategyDNA } from './store';
 import { authState, authActions } from './store/auth';
 import { subscribeToAllChannels, unsubscribeAll } from './services/realtime';
@@ -170,14 +170,38 @@ function generateMockPopulation(count: number): StrategyDNA[] {
   return population;
 }
 
+const SETTINGS_AUTO_OPEN_KEY = 'aether.settingsAutoOpened';
+
+const getSettingsAutoOpenFlag = () => {
+  if (typeof window === 'undefined') return false;
+  return window.localStorage.getItem(SETTINGS_AUTO_OPEN_KEY) === 'true';
+};
+
+const setSettingsAutoOpenFlag = () => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(SETTINGS_AUTO_OPEN_KEY, 'true');
+};
+
 const App: Component = () => {
   const [showAuthModal, setShowAuthModal] = createSignal(false);
-  const [showSettings, setShowSettings] = createSignal(true);
+  const [showSettings, setShowSettings] = createSignal(false);
+  const [didAutoOpenSettings, setDidAutoOpenSettings] = createSignal(getSettingsAutoOpenFlag());
   let newsFeedCleanup: (() => void) | null = null;
   let realtimeCleanup: (() => void) | null = null;
 
   onMount(() => {
     authActions.initialize();
+  });
+
+  createEffect(() => {
+    if (didAutoOpenSettings()) return;
+    if (authState.isLoading || !authState.isAuthenticated) return;
+    if (!authState.settings) return;
+    if (authState.apiKeys.length > 0) return;
+
+    setShowSettings(true);
+    setDidAutoOpenSettings(true);
+    setSettingsAutoOpenFlag();
   });
 
   onMount(() => {
