@@ -170,6 +170,7 @@ class ExchangeConnector {
   private isSimulated: boolean = true;
   private simulationTimer: number | null = null;
   private realApiPollingTimer: number | null = null;
+  private accountPollingTimer: number | null = null;
 
   constructor(exchange: Exchange) {
     this.config = EXCHANGE_CONFIGS[exchange];
@@ -298,6 +299,14 @@ class ExchangeConnector {
     await fetchTicker();
 
     this.realApiPollingTimer = window.setInterval(fetchTicker, 5000);
+
+    // Optional account polling (currently supported for BYBIT only)
+    if (this.config.name === 'BYBIT') {
+      await this.fetchAccountData();
+      this.accountPollingTimer = window.setInterval(() => {
+        void this.fetchAccountData();
+      }, 15000);
+    }
   }
 
   async fetchAccountData(): Promise<void> {
@@ -399,6 +408,11 @@ class ExchangeConnector {
     if (this.realApiPollingTimer) {
       clearInterval(this.realApiPollingTimer);
       this.realApiPollingTimer = null;
+    }
+
+    if (this.accountPollingTimer) {
+      clearInterval(this.accountPollingTimer);
+      this.accountPollingTimer = null;
     }
 
     if (this.ws) {
@@ -620,8 +634,13 @@ class ExchangeManager {
     }
     
     const connector = new ExchangeConnector(exchange);
-    await connector.connect();
+    const shouldEnableRealMode =
+      authState.isAuthenticated &&
+      authState.apiKeys.some((k) => k.provider === exchange && k.isActive);
+
+    connector.setRealMode(shouldEnableRealMode);
     this.connectors.set(exchange, connector);
+    await connector.connect();
   }
   
   disconnectExchange(exchange: Exchange): void {

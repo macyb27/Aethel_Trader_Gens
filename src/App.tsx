@@ -211,10 +211,6 @@ const App: Component = () => {
                 k => (k.provider === 'BYBIT' || k.provider === 'BINANCE') && k.isActive
               );
               if (exchange) {
-                const connector = exchangeManager.getConnector(exchange.provider as 'BYBIT' | 'BINANCE');
-                if (connector) {
-                  connector.setRealMode(true);
-                }
                 await exchangeManager.connectExchange(exchange.provider as 'BYBIT' | 'BINANCE');
                 actions.addLog('success', 'EXCHANGE', `Connected to ${exchange.provider} with real API`);
               }
