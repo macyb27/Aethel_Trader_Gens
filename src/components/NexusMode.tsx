@@ -21,7 +21,6 @@ class GSMSceneManager {
   private grid: THREE.GridHelper | null = null;
   private cage: THREE.LineSegments | null = null;
   private nodes: Map<string, THREE.Mesh> = new Map();
-  private selectedNode: THREE.Mesh | null = null;
   private raycaster: THREE.Raycaster;
   private mouse: THREE.Vector2;
   private animationId: number | null = null;
@@ -317,14 +316,11 @@ class GSMSceneManager {
 const NexusMode: Component = () => {
   let containerRef: HTMLDivElement | undefined;
   let sceneManager: GSMSceneManager | null = null;
-  const [isInitialized, setIsInitialized] = createSignal(false);
-  const [hoveredNode, setHoveredNode] = createSignal<GSMNode | null>(null);
   
   onMount(() => {
     if (containerRef) {
       sceneManager = new GSMSceneManager(containerRef);
       sceneManager.start();
-      setIsInitialized(true);
       
       // Initial node update
       sceneManager.updateNodes(state.gsmNodes);
