@@ -1,0 +1,59 @@
+name: Build Android APK (No Sandbox)
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'mobile/**'
+  pull_request:
+    branches: [master, main]
+    paths:
+      - 'mobile/**'
+  workflow_dispatch:
+
+jobs:
+  build-local:
+    name: Build APK Locally with Gradle (No EAS/Sandbox)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./mobile
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+          cache-dependency-path: './mobile/package-lock.json'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Prebuild Android Project
+        run: npx expo prebuild --platform android
+
+      - name: Build Release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aether-trader-apk
+          path: mobile/android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+          
