@@ -19,12 +19,14 @@ import './styles/dna-panel.css';
 import './styles/modals.css';
 import './styles/settings.css';
 
+const LandingPage = lazy(() => import('./components/LandingPage'));
 const FlowMode = lazy(() => import('./components/FlowMode'));
 const NexusMode = lazy(() => import('./components/NexusMode'));
 const DNAControlPanel = lazy(() => import('./components/DNAControlPanel'));
 const AwakeningButton = lazy(() => import('./components/AwakeningButton'));
 const AuthModal = lazy(() => import('./components/AuthModal'));
 const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
+const AIAssistant = lazy(() => import('./components/AIAssistant'));
 
 const LoadingScreen: Component = () => {
   return (
@@ -183,6 +185,7 @@ const setSettingsAutoOpenFlag = () => {
 };
 
 const App: Component = () => {
+  const [hasEnteredApp, setHasEnteredApp] = createSignal(false);
   const [showAuthModal, setShowAuthModal] = createSignal(false);
   const [showSettings, setShowSettings] = createSignal(false);
   const [didAutoOpenSettings, setDidAutoOpenSettings] = createSignal(getSettingsAutoOpenFlag());
@@ -339,47 +342,57 @@ const App: Component = () => {
 
   return (
     <div class="app-container">
-      <Show when={state.status === 'initializing'}>
-        <LoadingScreen />
-      </Show>
-
-      <Show when={state.status !== 'initializing'}>
-        <TopBar
-          onAuthClick={() => setShowAuthModal(true)}
-          onSettingsClick={() => setShowSettings(true)}
-        />
-
+      <Show when={!hasEnteredApp()}>
         <Suspense fallback={<ModeLoadingFallback />}>
-          <Show when={state.mode === 'flow'}>
-            <FlowMode />
-          </Show>
-
-          <Show when={state.mode === 'nexus'}>
-            <NexusMode />
-          </Show>
-
-          <Show when={state.status === 'active'}>
-            <DNAControlPanel />
-          </Show>
-
-          <AwakeningButton />
-
-          <AuthModal
-            isOpen={showAuthModal()}
-            onClose={() => setShowAuthModal(false)}
-          />
-
-          <SettingsPanel
-            isOpen={showSettings()}
-            onClose={() => setShowSettings(false)}
-          />
+          <LandingPage onEnter={() => setHasEnteredApp(true)} />
         </Suspense>
-
-        <HotkeyHints />
       </Show>
 
-      <ModeTransition />
-      <CrisisOverlay />
+      <Show when={hasEnteredApp()}>
+        <Show when={state.status === 'initializing'}>
+          <LoadingScreen />
+        </Show>
+
+        <Show when={state.status !== 'initializing'}>
+          <TopBar
+            onAuthClick={() => setShowAuthModal(true)}
+            onSettingsClick={() => setShowSettings(true)}
+          />
+
+          <Suspense fallback={<ModeLoadingFallback />}>
+            <Show when={state.mode === 'flow'}>
+              <FlowMode />
+            </Show>
+
+            <Show when={state.mode === 'nexus'}>
+              <NexusMode />
+            </Show>
+
+            <Show when={state.status === 'active'}>
+              <DNAControlPanel />
+            </Show>
+
+            <AwakeningButton />
+
+            <AuthModal
+              isOpen={showAuthModal()}
+              onClose={() => setShowAuthModal(false)}
+            />
+
+            <SettingsPanel
+              isOpen={showSettings()}
+              onClose={() => setShowSettings(false)}
+            />
+
+            <AIAssistant />
+          </Suspense>
+
+          <HotkeyHints />
+        </Show>
+
+        <ModeTransition />
+        <CrisisOverlay />
+      </Show>
 
       <style>{`
         .mode-loading {
