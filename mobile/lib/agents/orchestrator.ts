@@ -156,6 +156,9 @@ export class AgentOrchestrator {
       
       this.workflowState.phase = "halted";
     } finally {
+      if (!this.workflowState.completedAt) {
+        this.workflowState.completedAt = new Date();
+      }
       this.isRunning = false;
     }
   }

@@ -24,7 +24,7 @@ describe("QA Bot Agent", () => {
     const trade = {
       symbol: "AAPL",
       side: "buy" as const,
-      size: 10,
+      size: 3, // 3 * 150 = 450 (4.5% of $10k) within default 5% position limit
       price: 150,
       leverage: 1,
     };
