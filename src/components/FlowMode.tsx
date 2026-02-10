@@ -267,23 +267,25 @@ const FlowMode: Component = () => {
   
   // Auto-scroll to bottom when new logs arrive
   onMount(() => {
-    const observer = new MutationObserver(() => {
-      if (autoScroll() && logContainerRef) {
-        logContainerRef.scrollTop = logContainerRef.scrollHeight;
+    const checkAndObserve = () => {
+      if (logContainerRef) {
+        const observer = new MutationObserver(() => {
+          if (autoScroll() && logContainerRef) {
+            logContainerRef.scrollTop = logContainerRef.scrollHeight;
+          }
+        });
+        observer.observe(logContainerRef, { childList: true, subtree: true });
+        onCleanup(() => observer.disconnect());
       }
-    });
-    
-    if (logContainerRef) {
-      observer.observe(logContainerRef, { childList: true, subtree: true });
-    }
-    
-    onCleanup(() => observer.disconnect());
+    };
+    checkAndObserve();
   });
   
   // Handle manual scroll
-  const handleScroll = () => {
-    if (!logContainerRef) return;
-    const isAtBottom = logContainerRef.scrollHeight - logContainerRef.scrollTop <= logContainerRef.clientHeight + 50;
+  const handleScroll = (e: Event) => {
+    const target = e.currentTarget as HTMLDivElement;
+    if (!target) return;
+    const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
     setAutoScroll(isAtBottom);
   };
   
@@ -329,7 +331,7 @@ const FlowMode: Component = () => {
       <div class="flow-body">
         <div class="flow-content">
           <div 
-            ref={logContainerRef}
+            ref={el => { logContainerRef = el as HTMLDivElement; }}
             class="log-container" 
             onScroll={handleScroll}
           >

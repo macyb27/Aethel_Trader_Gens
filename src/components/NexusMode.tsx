@@ -346,7 +346,7 @@ const NexusMode: Component = () => {
   
   return (
     <div class="nexus-mode">
-      <div ref={containerRef} class="nexus-canvas-container" />
+      <div ref={el => { containerRef = el as HTMLDivElement; }} class="nexus-canvas-container" />
       
       <div class="nexus-overlay">
         {/* Header */}
