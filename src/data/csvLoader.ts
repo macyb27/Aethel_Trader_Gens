@@ -131,10 +131,17 @@ export async function loadCandlesFromFile(
   }
 
   // Node.js: fs (dynamic import to avoid issues in browser builds)
-  if (typeof process !== 'undefined' && process.versions?.node) {
-    const fs = await import('fs/promises');
-    const content = await fs.readFile(pathOrUrl, 'utf-8');
-    return loadCandlesFromCsv(content, options);
+  // This code path is only taken in Node.js environments
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const g = globalThis as any;
+    if (typeof g.process !== 'undefined' && g.process.versions?.node) {
+      const fs = await g.__importFsPromises();
+      const content = await fs.readFile(pathOrUrl, 'utf-8');
+      return loadCandlesFromCsv(content, options);
+    }
+  } catch {
+    // Not in Node.js or fs not available
   }
 
   throw new Error('loadCandlesFromFile requires fetch (browser) or Node.js fs');

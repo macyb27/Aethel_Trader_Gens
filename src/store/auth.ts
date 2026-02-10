@@ -1,7 +1,7 @@
-import { createSignal, createRoot } from 'solid-js';
+import { createRoot } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import type { User, Session } from '@supabase/supabase-js';
-import { supabase, getUserSettings, upsertUserSettings, getApiKeys, type UserSettings, type ApiKey } from '../lib/supabase';
+import { supabase, supabaseConfigured, getUserSettings, upsertUserSettings, getApiKeys, type UserSettings, type ApiKey } from '../lib/supabase';
 
 export interface AuthState {
   user: User | null;
@@ -26,6 +26,10 @@ function createAuthStore() {
 
   const actions = {
     async initialize() {
+      if (!supabaseConfigured) {
+        setState({ isLoading: false });
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session) {

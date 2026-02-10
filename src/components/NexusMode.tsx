@@ -8,7 +8,8 @@
 
 import { Component, onMount, onCleanup, createSignal, Show } from 'solid-js';
 import * as THREE from 'three';
-import { state, actions, GSMNode } from '../store';
+import { state, actions } from '../store';
+import type { GSMNode } from '../store';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THREE.JS SCENE MANAGER
@@ -21,7 +22,6 @@ class GSMSceneManager {
   private grid: THREE.GridHelper | null = null;
   private cage: THREE.LineSegments | null = null;
   private nodes: Map<string, THREE.Mesh> = new Map();
-  private selectedNode: THREE.Mesh | null = null;
   private raycaster: THREE.Raycaster;
   private mouse: THREE.Vector2;
   private animationId: number | null = null;
@@ -317,8 +317,7 @@ class GSMSceneManager {
 const NexusMode: Component = () => {
   let containerRef: HTMLDivElement | undefined;
   let sceneManager: GSMSceneManager | null = null;
-  const [isInitialized, setIsInitialized] = createSignal(false);
-  const [hoveredNode, setHoveredNode] = createSignal<GSMNode | null>(null);
+  const [, setIsInitialized] = createSignal(false);
   
   onMount(() => {
     if (containerRef) {

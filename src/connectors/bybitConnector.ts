@@ -21,11 +21,10 @@ export interface BybitConnectorConfig {
  */
 export class BybitConnector implements IExchangeConnector {
   readonly venue = 'BYBIT' as const;
-  private _config: BybitConnectorConfig;
   private connected = false;
 
-  constructor(config: BybitConnectorConfig = {}) {
-    this._config = config;
+  constructor(_config: BybitConnectorConfig = {}) {
+    // Config stored for future live API integration
   }
 
   async connect(): Promise<void> {

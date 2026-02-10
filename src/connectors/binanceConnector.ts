@@ -21,11 +21,10 @@ export interface BinanceConnectorConfig {
  */
 export class BinanceConnector implements IExchangeConnector {
   readonly venue = 'BINANCE' as const;
-  private _config: BinanceConnectorConfig;
   private connected = false;
 
-  constructor(config: BinanceConnectorConfig = {}) {
-    this._config = config;
+  constructor(_config: BinanceConnectorConfig = {}) {
+    // Config stored for future live API integration
   }
 
   async connect(): Promise<void> {

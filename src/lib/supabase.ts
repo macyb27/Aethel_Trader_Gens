@@ -1,12 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
+export const supabaseConfigured = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
@@ -30,6 +28,8 @@ export interface UserSettings {
   notificationsEnabled: boolean;
 }
 
+type UserSettingsRow = Database['public']['Tables']['user_settings']['Row'];
+
 export async function getUserSettings(userId: string): Promise<UserSettings | null> {
   const { data, error } = await supabase
     .from('user_settings')
@@ -39,12 +39,13 @@ export async function getUserSettings(userId: string): Promise<UserSettings | nu
 
   if (error || !data) return null;
 
+  const row = data as unknown as UserSettingsRow;
   return {
-    theme: data.theme || 'dark',
-    defaultExchange: data.default_exchange || 'BYBIT',
-    riskTolerance: data.risk_tolerance || 0.5,
-    autoTrade: data.auto_trade || false,
-    notificationsEnabled: data.notifications_enabled || true,
+    theme: row.theme || 'dark',
+    defaultExchange: row.default_exchange || 'BYBIT',
+    riskTolerance: row.risk_tolerance || 0.5,
+    autoTrade: row.auto_trade || false,
+    notificationsEnabled: row.notifications_enabled || true,
   };
 }
 
@@ -242,6 +243,8 @@ export interface Transaction {
   completedAt: string | null;
 }
 
+type PaymentMethodRow = Database['public']['Tables']['payment_methods']['Row'];
+
 export async function getPaymentMethods(userId: string): Promise<PaymentMethod[]> {
   const { data, error } = await supabase
     .from('payment_methods')
@@ -251,7 +254,7 @@ export async function getPaymentMethods(userId: string): Promise<PaymentMethod[]
 
   if (error || !data) return [];
 
-  return data.map((pm) => ({
+  return (data as unknown as PaymentMethodRow[]).map((pm) => ({
     id: pm.id,
     type: pm.type as PaymentMethodType,
     provider: pm.provider,
@@ -299,6 +302,8 @@ export async function deletePaymentMethod(paymentMethodId: string) {
   return { error };
 }
 
+type WalletBalanceRow = Database['public']['Tables']['wallet_balances']['Row'];
+
 export async function getWalletBalances(userId: string): Promise<WalletBalance[]> {
   const { data, error } = await supabase
     .from('wallet_balances')
@@ -307,7 +312,7 @@ export async function getWalletBalances(userId: string): Promise<WalletBalance[]
 
   if (error || !data) return [];
 
-  return data.map((wb) => ({
+  return (data as unknown as WalletBalanceRow[]).map((wb) => ({
     id: wb.id,
     currency: wb.currency as Currency,
     balance: parseFloat(wb.balance as string) || 0,
@@ -319,6 +324,8 @@ export async function getWalletBalances(userId: string): Promise<WalletBalance[]
   }));
 }
 
+type TransactionRow = Database['public']['Tables']['transactions']['Row'];
+
 export async function getTransactions(userId: string, limit = 50): Promise<Transaction[]> {
   const { data, error } = await supabase
     .from('transactions')
@@ -329,7 +336,7 @@ export async function getTransactions(userId: string, limit = 50): Promise<Trans
 
   if (error || !data) return [];
 
-  return data.map((tx) => ({
+  return (data as unknown as TransactionRow[]).map((tx) => ({
     id: tx.id,
     type: tx.type as TransactionType,
     currency: tx.currency as Currency,
