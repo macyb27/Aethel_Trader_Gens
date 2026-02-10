@@ -19,6 +19,7 @@ import './styles/nexus-mode.css';
 import './styles/dna-panel.css';
 import './styles/modals.css';
 import './styles/settings.css';
+import './styles/ai-features.css';
 
 const FlowMode = lazy(() => import('./components/FlowMode'));
 const NexusMode = lazy(() => import('./components/NexusMode'));
@@ -27,6 +28,14 @@ const AwakeningButton = lazy(() => import('./components/AwakeningButton'));
 const AuthModal = lazy(() => import('./components/AuthModal'));
 const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
 const LandingPage = lazy(() => import('./components/LandingPage'));
+const AIInsightsModule = lazy(async () => {
+  const mod = await import('./components/AIInsights');
+  return { default: mod.OnboardingOverlay };
+});
+const CommandBarModule = lazy(async () => {
+  const mod = await import('./components/AIInsights');
+  return { default: mod.CommandBar };
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LANDING PAGE STATE
@@ -441,6 +450,11 @@ const App: Component = () => {
           </Suspense>
 
           <HotkeyHints />
+
+          <Suspense fallback={null}>
+            <AIInsightsModule />
+            <CommandBarModule />
+          </Suspense>
         </Show>
 
         <ModeTransition />

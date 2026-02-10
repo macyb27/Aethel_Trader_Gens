@@ -5,8 +5,13 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { Component, For, Show, createSignal, onMount, onCleanup } from 'solid-js';
+import { Component, For, Show, createSignal, onMount, onCleanup, Suspense, lazy } from 'solid-js';
 import { state, actions, LogEntry } from '../store';
+
+const AIInsightPanel = lazy(async () => {
+  const mod = await import('./AIInsights');
+  return { default: mod.AIInsightPanel };
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LOG ENTRY COMPONENT
@@ -364,6 +369,9 @@ const FlowMode: Component = () => {
         <div class="flow-sidebar">
           <MetricsPanel />
           <PortfolioPanel />
+          <Suspense fallback={null}>
+            <AIInsightPanel />
+          </Suspense>
         </div>
       </div>
     </div>
