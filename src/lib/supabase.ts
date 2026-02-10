@@ -273,8 +273,8 @@ export async function getPaymentMethods(userId: string): Promise<PaymentMethod[]
     name: pm.name,
     accountIdentifier: pm.account_identifier,
     currency: pm.currency as Currency,
-    isVerified: pm.is_verified,
-    isActive: pm.is_active,
+    isVerified: pm.is_verified ?? false,
+    isActive: pm.is_active ?? true,
     createdAt: pm.created_at,
   }));
 }
