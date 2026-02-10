@@ -1,14 +1,17 @@
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from './database.types';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
+/** True when Supabase credentials are configured */
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+// Create client even without credentials (operations will simply fail gracefully)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const supabase: SupabaseClient<any> = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key'
+);
 
 export type ApiKeyProvider = 'BYBIT' | 'BINANCE' | 'OPENAI' | 'DEEPSEEK' | 'NEWS_API' | 'ALPHA_VANTAGE';
 
@@ -31,6 +34,8 @@ export interface UserSettings {
 }
 
 export async function getUserSettings(userId: string): Promise<UserSettings | null> {
+  if (!isSupabaseConfigured) return null;
+
   const { data, error } = await supabase
     .from('user_settings')
     .select('*')
@@ -44,11 +49,13 @@ export async function getUserSettings(userId: string): Promise<UserSettings | nu
     defaultExchange: data.default_exchange || 'BYBIT',
     riskTolerance: data.risk_tolerance || 0.5,
     autoTrade: data.auto_trade || false,
-    notificationsEnabled: data.notifications_enabled || true,
+    notificationsEnabled: data.notifications_enabled ?? true,
   };
 }
 
 export async function upsertUserSettings(userId: string, settings: Partial<UserSettings>) {
+  if (!isSupabaseConfigured) return { error: new Error('Supabase not configured') };
+
   const { error } = await supabase
     .from('user_settings')
     .upsert({
@@ -64,6 +71,8 @@ export async function upsertUserSettings(userId: string, settings: Partial<UserS
 }
 
 export async function getApiKeys(userId: string): Promise<ApiKey[]> {
+  if (!isSupabaseConfigured) return [];
+
   const { data, error } = await supabase
     .from('api_keys')
     .select('id, provider, key_name, is_testnet, is_active, last_used_at, created_at')
@@ -72,14 +81,14 @@ export async function getApiKeys(userId: string): Promise<ApiKey[]> {
 
   if (error || !data) return [];
 
-  return data.map((key) => ({
-    id: key.id,
+  return (data as Array<Record<string, unknown>>).map((key) => ({
+    id: key.id as string,
     provider: key.provider as ApiKeyProvider,
-    keyName: key.key_name,
-    isTestnet: key.is_testnet || false,
-    isActive: key.is_active || true,
-    lastUsedAt: key.last_used_at,
-    createdAt: key.created_at,
+    keyName: key.key_name as string,
+    isTestnet: (key.is_testnet as boolean) || false,
+    isActive: (key.is_active as boolean) ?? true,
+    lastUsedAt: key.last_used_at as string | null,
+    createdAt: key.created_at as string,
   }));
 }
 
@@ -91,6 +100,8 @@ export async function addApiKey(
   apiSecret: string | null,
   isTestnet: boolean
 ) {
+  if (!isSupabaseConfigured) return { data: null, error: new Error('Supabase not configured') };
+
   const { data, error } = await supabase
     .from('api_keys')
     .insert({
@@ -109,6 +120,8 @@ export async function addApiKey(
 }
 
 export async function deleteApiKey(keyId: string) {
+  if (!isSupabaseConfigured) return { error: new Error('Supabase not configured') };
+
   const { error } = await supabase
     .from('api_keys')
     .delete()
@@ -118,6 +131,8 @@ export async function deleteApiKey(keyId: string) {
 }
 
 export async function toggleApiKey(keyId: string, isActive: boolean) {
+  if (!isSupabaseConfigured) return { error: new Error('Supabase not configured') };
+
   const { error } = await supabase
     .from('api_keys')
     .update({ is_active: isActive })
@@ -143,6 +158,8 @@ export async function saveStrategy(userId: string, strategy: {
   entanglementScore: number;
   isActive: boolean;
 }) {
+  if (!isSupabaseConfigured) return { data: null, error: new Error('Supabase not configured') };
+
   const { data, error } = await supabase
     .from('strategies')
     .upsert({
@@ -176,6 +193,8 @@ export async function addTradingLog(
   message: string,
   data?: Record<string, unknown>
 ) {
+  if (!isSupabaseConfigured) return { error: new Error('Supabase not configured') };
+
   const { error } = await supabase
     .from('trading_logs')
     .insert({
@@ -190,6 +209,8 @@ export async function addTradingLog(
 }
 
 export async function getTradingLogs(userId: string, limit = 100) {
+  if (!isSupabaseConfigured) return { data: null, error: new Error('Supabase not configured') };
+
   const { data, error } = await supabase
     .from('trading_logs')
     .select('*')
@@ -243,6 +264,8 @@ export interface Transaction {
 }
 
 export async function getPaymentMethods(userId: string): Promise<PaymentMethod[]> {
+  if (!isSupabaseConfigured) return [];
+
   const { data, error } = await supabase
     .from('payment_methods')
     .select('*')
@@ -251,16 +274,16 @@ export async function getPaymentMethods(userId: string): Promise<PaymentMethod[]
 
   if (error || !data) return [];
 
-  return data.map((pm) => ({
-    id: pm.id,
+  return (data as Array<Record<string, unknown>>).map((pm) => ({
+    id: pm.id as string,
     type: pm.type as PaymentMethodType,
-    provider: pm.provider,
-    name: pm.name,
-    accountIdentifier: pm.account_identifier,
+    provider: pm.provider as string,
+    name: pm.name as string,
+    accountIdentifier: pm.account_identifier as string,
     currency: pm.currency as Currency,
-    isVerified: pm.is_verified,
-    isActive: pm.is_active,
-    createdAt: pm.created_at,
+    isVerified: pm.is_verified as boolean,
+    isActive: pm.is_active as boolean,
+    createdAt: pm.created_at as string,
   }));
 }
 
@@ -272,6 +295,8 @@ export async function addPaymentMethod(
   accountIdentifier: string,
   currency: Currency
 ) {
+  if (!isSupabaseConfigured) return { data: null, error: new Error('Supabase not configured') };
+
   const { data, error } = await supabase
     .from('payment_methods')
     .insert({
@@ -291,6 +316,8 @@ export async function addPaymentMethod(
 }
 
 export async function deletePaymentMethod(paymentMethodId: string) {
+  if (!isSupabaseConfigured) return { error: new Error('Supabase not configured') };
+
   const { error } = await supabase
     .from('payment_methods')
     .delete()
@@ -300,6 +327,8 @@ export async function deletePaymentMethod(paymentMethodId: string) {
 }
 
 export async function getWalletBalances(userId: string): Promise<WalletBalance[]> {
+  if (!isSupabaseConfigured) return [];
+
   const { data, error } = await supabase
     .from('wallet_balances')
     .select('*')
@@ -307,19 +336,21 @@ export async function getWalletBalances(userId: string): Promise<WalletBalance[]
 
   if (error || !data) return [];
 
-  return data.map((wb) => ({
-    id: wb.id,
+  return (data as Array<Record<string, unknown>>).map((wb) => ({
+    id: wb.id as string,
     currency: wb.currency as Currency,
     balance: parseFloat(wb.balance as string) || 0,
     lockedBalance: parseFloat(wb.locked_balance as string) || 0,
     totalDeposited: parseFloat(wb.total_deposited as string) || 0,
     totalWithdrawn: parseFloat(wb.total_withdrawn as string) || 0,
     totalPnl: parseFloat(wb.total_pnl as string) || 0,
-    updatedAt: wb.updated_at,
+    updatedAt: wb.updated_at as string,
   }));
 }
 
 export async function getTransactions(userId: string, limit = 50): Promise<Transaction[]> {
+  if (!isSupabaseConfigured) return [];
+
   const { data, error } = await supabase
     .from('transactions')
     .select('*')
@@ -329,18 +360,18 @@ export async function getTransactions(userId: string, limit = 50): Promise<Trans
 
   if (error || !data) return [];
 
-  return data.map((tx) => ({
-    id: tx.id,
+  return (data as Array<Record<string, unknown>>).map((tx) => ({
+    id: tx.id as string,
     type: tx.type as TransactionType,
     currency: tx.currency as Currency,
     amount: parseFloat(tx.amount as string) || 0,
     fee: parseFloat(tx.fee as string) || 0,
     status: tx.status as TransactionStatus,
-    paymentMethodId: tx.payment_method_id,
-    paymentReference: tx.payment_reference,
-    description: tx.description,
-    createdAt: tx.created_at,
-    completedAt: tx.completed_at,
+    paymentMethodId: tx.payment_method_id as string | null,
+    paymentReference: tx.payment_reference as string | null,
+    description: tx.description as string | null,
+    createdAt: tx.created_at as string,
+    completedAt: tx.completed_at as string | null,
   }));
 }
 
@@ -352,6 +383,8 @@ export async function createTransaction(
   paymentMethodId: string | null,
   description: string
 ) {
+  if (!isSupabaseConfigured) return { data: null, error: new Error('Supabase not configured') };
+
   const { data, error } = await supabase
     .from('transactions')
     .insert({

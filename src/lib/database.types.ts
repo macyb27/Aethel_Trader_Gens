@@ -206,6 +206,120 @@ export interface Database {
           created_at?: string;
         };
       };
+      payment_methods: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: string;
+          provider: string;
+          name: string;
+          account_identifier: string;
+          currency: string;
+          is_verified: boolean;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: string;
+          provider: string;
+          name: string;
+          account_identifier: string;
+          currency: string;
+          is_verified?: boolean;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: string;
+          provider?: string;
+          name?: string;
+          account_identifier?: string;
+          currency?: string;
+          is_verified?: boolean;
+          is_active?: boolean;
+          created_at?: string;
+        };
+      };
+      wallet_balances: {
+        Row: {
+          id: string;
+          user_id: string;
+          currency: string;
+          balance: string;
+          locked_balance: string;
+          total_deposited: string;
+          total_withdrawn: string;
+          total_pnl: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          currency: string;
+          balance?: string;
+          locked_balance?: string;
+          total_deposited?: string;
+          total_withdrawn?: string;
+          total_pnl?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          currency?: string;
+          balance?: string;
+          locked_balance?: string;
+          total_deposited?: string;
+          total_withdrawn?: string;
+          total_pnl?: string;
+          updated_at?: string;
+        };
+      };
+      transactions: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: string;
+          currency: string;
+          amount: string;
+          fee: string;
+          status: string;
+          payment_method_id: string | null;
+          payment_reference: string | null;
+          description: string | null;
+          created_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: string;
+          currency: string;
+          amount: number;
+          fee?: number;
+          status?: string;
+          payment_method_id?: string | null;
+          description?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: string;
+          currency?: string;
+          amount?: number;
+          fee?: number;
+          status?: string;
+          payment_method_id?: string | null;
+          payment_reference?: string | null;
+          description?: string | null;
+          completed_at?: string | null;
+        };
+      };
     };
   };
 }

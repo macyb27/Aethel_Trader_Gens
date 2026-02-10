@@ -1,7 +1,7 @@
-import { createSignal, createRoot } from 'solid-js';
+import { createRoot } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import type { User, Session } from '@supabase/supabase-js';
-import { supabase, getUserSettings, upsertUserSettings, getApiKeys, type UserSettings, type ApiKey } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, getUserSettings, upsertUserSettings, getApiKeys, type UserSettings, type ApiKey } from '../lib/supabase';
 
 export interface AuthState {
   user: User | null;
@@ -26,35 +26,45 @@ function createAuthStore() {
 
   const actions = {
     async initialize() {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (session) {
-        setState({
-          user: session.user,
-          session,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-        await actions.loadUserData(session.user.id);
-      } else {
+      if (!isSupabaseConfigured) {
         setState({ isLoading: false });
+        return;
       }
 
-      supabase.auth.onAuthStateChange((event, session) => {
-        (async () => {
-          if (event === 'SIGNED_IN' && session) {
-            setState({
-              user: session.user,
-              session,
-              isAuthenticated: true,
-            });
-            await actions.loadUserData(session.user.id);
-          } else if (event === 'SIGNED_OUT') {
-            setState(initialState);
-            setState({ isLoading: false });
-          }
-        })();
-      });
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {
+          setState({
+            user: session.user,
+            session,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+          await actions.loadUserData(session.user.id);
+        } else {
+          setState({ isLoading: false });
+        }
+
+        supabase.auth.onAuthStateChange((event, session) => {
+          (async () => {
+            if (event === 'SIGNED_IN' && session) {
+              setState({
+                user: session.user,
+                session,
+                isAuthenticated: true,
+              });
+              await actions.loadUserData(session.user.id);
+            } else if (event === 'SIGNED_OUT') {
+              setState(initialState);
+              setState({ isLoading: false });
+            }
+          })();
+        });
+      } catch (error) {
+        console.warn('Supabase initialization failed:', error);
+        setState({ isLoading: false });
+      }
     },
 
     async loadUserData(userId: string) {

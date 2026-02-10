@@ -52,7 +52,7 @@ const SettingsPanel: Component<SettingsPanelProps> = (props) => {
       setError(saveError.message);
     } else if (data) {
       authActions.addApiKey({
-        id: data.id,
+        id: (data as { id: string }).id,
         provider: selectedProvider(),
         keyName: keyName() || `${selectedProvider()} Key`,
         isTestnet: isTestnet(),

@@ -92,7 +92,6 @@ class CRDTStoreManager {
   private trades: Y.Array<NormalizedTrade>;
   private klines: Y.Map<Y.Array<NormalizedKline>>;
   private portfolio: Y.Map<unknown>;
-  private metadata: Y.Map<unknown>;
   
   // Observers
   private observers: Map<string, Set<(data: unknown) => void>> = new Map();
@@ -106,7 +105,8 @@ class CRDTStoreManager {
     this.trades = this.doc.getArray('trades');
     this.klines = this.doc.getMap('klines');
     this.portfolio = this.doc.getMap('portfolio');
-    this.metadata = this.doc.getMap('metadata');
+    // Initialize metadata map in Yjs doc (used for future extensions)
+    this.doc.getMap('metadata');
     
     // Set up observers
     this.setupObservers();
