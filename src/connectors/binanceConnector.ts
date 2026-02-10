@@ -21,11 +21,11 @@ export interface BinanceConnectorConfig {
  */
 export class BinanceConnector implements IExchangeConnector {
   readonly venue = 'BINANCE' as const;
-  private _config: BinanceConnectorConfig;
+  private readonly config: BinanceConnectorConfig;
   private connected = false;
 
   constructor(config: BinanceConnectorConfig = {}) {
-    this._config = config;
+    this.config = config;
   }
 
   async connect(): Promise<void> {
@@ -56,7 +56,7 @@ export class BinanceConnector implements IExchangeConnector {
     // Für Live: POST /fapi/v1/order mit Signatur
     return {
       intentId: intent.id,
-      orderId: `binance-${Date.now()}`,
+      orderId: `${this.config.testnet ? 'binance-testnet' : 'binance'}-${Date.now()}`,
       clientOrderId: intent.id,
       venue: 'BINANCE',
       status: 'filled',
