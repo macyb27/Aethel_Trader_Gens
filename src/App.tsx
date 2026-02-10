@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════════════════
  * ÆTHER-TRADER Ω v4.0 - MAIN APPLICATION
  * Self-Aware Market Oracle with Quantum-Inspired Trading Intelligence
- * Full-Stack Version with Real API Support
+ * Full-Stack Version with Real API Support & AI-Enhanced UX
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
@@ -18,6 +18,7 @@ import './styles/nexus-mode.css';
 import './styles/dna-panel.css';
 import './styles/modals.css';
 import './styles/settings.css';
+import './styles/ai-assistant.css';
 
 const FlowMode = lazy(() => import('./components/FlowMode'));
 const NexusMode = lazy(() => import('./components/NexusMode'));
@@ -25,6 +26,8 @@ const DNAControlPanel = lazy(() => import('./components/DNAControlPanel'));
 const AwakeningButton = lazy(() => import('./components/AwakeningButton'));
 const AuthModal = lazy(() => import('./components/AuthModal'));
 const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
+const AIAssistant = lazy(() => import('./components/AIAssistant'));
+const OnboardingOverlay = lazy(() => import('./components/OnboardingOverlay'));
 
 const LoadingScreen: Component = () => {
   return (
@@ -33,6 +36,7 @@ const LoadingScreen: Component = () => {
         <div class="oracle-spinner-core" />
       </div>
       <h1 class="oracle-title">ÆTHER-TRADER</h1>
+      <p class="oracle-subtitle-loading">Quantum-Inspired Trading Intelligence</p>
       <p class="oracle-status">Oracle Initializing...</p>
       <p class="oracle-agents">
         {state.agentsSpawned} / {state.totalAgents} Agents
@@ -68,15 +72,15 @@ const CrisisOverlay: Component = () => {
 const HotkeyHints: Component = () => {
   return (
     <div class="hotkey-hints">
-      <div class="hotkey-hint">
+      <div class="hotkey-hint" data-tooltip="Switch to Flow Mode — Audit Logbook">
         <span class="hotkey-key">F</span>
         <span>Flow Mode</span>
       </div>
-      <div class="hotkey-hint">
+      <div class="hotkey-hint" data-tooltip="Switch to Nexus Mode — 3D Strategy Matrix">
         <span class="hotkey-key">N</span>
         <span>Nexus Mode</span>
       </div>
-      <div class="hotkey-hint">
+      <div class="hotkey-hint" data-tooltip="Toggle between Flow and Nexus modes">
         <span class="hotkey-key">ESC</span>
         <span>Toggle</span>
       </div>
@@ -96,6 +100,8 @@ const ModeLoadingFallback: Component = () => {
 interface TopBarProps {
   onAuthClick: () => void;
   onSettingsClick: () => void;
+  onAIClick: () => void;
+  isAIOpen: boolean;
 }
 
 const TopBar: Component<TopBarProps> = (props) => {
@@ -105,19 +111,52 @@ const TopBar: Component<TopBarProps> = (props) => {
   return (
     <div class="top-bar">
       <div class="top-bar-left">
-        <span class="app-logo">ÆTHER</span>
+        <span class="app-logo" data-tooltip="ÆTHER-TRADER Ω v4.0 — Quantum Trading Oracle">ÆTHER</span>
         <Show when={isRealMode()}>
-          <span class="mode-badge real">LIVE</span>
+          <span class="mode-badge real" data-tooltip="Connected to exchange APIs with live market data">LIVE</span>
         </Show>
         <Show when={!isRealMode()}>
-          <span class="mode-badge sim">DEMO</span>
+          <span class="mode-badge sim" data-tooltip="Running with simulated data — add API keys in Settings for live mode">DEMO</span>
+        </Show>
+
+        <div class="top-bar-separator" />
+
+        {/* Mode Indicator */}
+        <div
+          class="mode-indicator"
+          classList={{ 'flow-active': state.mode === 'flow', 'nexus-active': state.mode === 'nexus' }}
+          onClick={() => actions.toggleMode()}
+          data-tooltip={state.mode === 'flow' ? 'Flow Mode — Click to switch to Nexus' : 'Nexus Mode — Click to switch to Flow'}
+        >
+          <span class="mode-indicator-icon">{state.mode === 'flow' ? '📜' : '🌌'}</span>
+          <span>{state.mode === 'flow' ? 'FLOW' : 'NEXUS'}</span>
+        </div>
+
+        {/* Status */}
+        <Show when={state.status === 'active'}>
+          <div class="top-bar-status-active" data-tooltip="Oracle is active and monitoring markets">
+            <span class="status-pulse-dot" />
+            <span>ACTIVE</span>
+          </div>
         </Show>
       </div>
+
       <div class="top-bar-right">
+        {/* AI Assistant Toggle */}
+        <button
+          class="ai-toggle-btn"
+          classList={{ active: props.isAIOpen }}
+          onClick={props.onAIClick}
+          data-tooltip="Open AI Assistant for market insights and help"
+        >
+          <span class="ai-toggle-icon">🤖</span>
+          <span>AI</span>
+        </button>
+
         <Show when={authState.isAuthenticated}>
           <div class="user-info">
             <span class="user-email">{authState.user?.email}</span>
-            <button class="btn btn-small" onClick={props.onSettingsClick}>
+            <button class="btn btn-small" onClick={props.onSettingsClick} data-tooltip="Manage API keys and preferences">
               Settings
             </button>
             <button class="btn btn-small" onClick={() => authActions.signOut()}>
@@ -126,7 +165,7 @@ const TopBar: Component<TopBarProps> = (props) => {
           </div>
         </Show>
         <Show when={!authState.isAuthenticated && !authState.isLoading}>
-          <button class="btn btn-primary btn-small" onClick={props.onAuthClick}>
+          <button class="btn btn-primary btn-small" onClick={props.onAuthClick} data-tooltip="Sign in to save settings and enable live trading">
             Sign In
           </button>
         </Show>
@@ -185,6 +224,7 @@ const setSettingsAutoOpenFlag = () => {
 const App: Component = () => {
   const [showAuthModal, setShowAuthModal] = createSignal(false);
   const [showSettings, setShowSettings] = createSignal(false);
+  const [showAI, setShowAI] = createSignal(false);
   const [didAutoOpenSettings, setDidAutoOpenSettings] = createSignal(getSettingsAutoOpenFlag());
   let newsFeedCleanup: (() => void) | null = null;
   let realtimeCleanup: (() => void) | null = null;
@@ -259,6 +299,7 @@ const App: Component = () => {
             await exchangeManager.connectExchange('BYBIT');
           }
 
+          actions.addLog('info', 'AI', 'AI Assistant ready — click the AI button for insights');
           actions.addLog('info', 'CORE', 'Press ACTIVATE ORACLE to begin');
         }, 500);
       }
@@ -347,6 +388,8 @@ const App: Component = () => {
         <TopBar
           onAuthClick={() => setShowAuthModal(true)}
           onSettingsClick={() => setShowSettings(true)}
+          onAIClick={() => setShowAI(!showAI())}
+          isAIOpen={showAI()}
         />
 
         <Suspense fallback={<ModeLoadingFallback />}>
@@ -373,6 +416,13 @@ const App: Component = () => {
             isOpen={showSettings()}
             onClose={() => setShowSettings(false)}
           />
+
+          <AIAssistant
+            isOpen={showAI()}
+            onClose={() => setShowAI(false)}
+          />
+
+          <OnboardingOverlay />
         </Suspense>
 
         <HotkeyHints />
@@ -414,7 +464,7 @@ const App: Component = () => {
           right: 0;
           height: 48px;
           background: rgba(5, 5, 5, 0.95);
-          border-bottom: 1px solid var(--border-color);
+          border-bottom: 1px solid rgba(0, 243, 255, 0.15);
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -429,18 +479,25 @@ const App: Component = () => {
           gap: var(--space-md);
         }
 
+        .top-bar-separator {
+          width: 1px;
+          height: 20px;
+          background: rgba(255, 255, 255, 0.1);
+        }
+
         .app-logo {
           font-family: 'Orbitron', sans-serif;
           font-size: 1.1rem;
           font-weight: 700;
           color: var(--neon-cyan);
           letter-spacing: 2px;
+          cursor: default;
         }
 
         .mode-badge {
           font-size: 0.65rem;
           padding: 2px 8px;
-          border-radius: var(--radius-sm);
+          border-radius: 4px;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 1px;
@@ -477,6 +534,42 @@ const App: Component = () => {
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+        }
+
+        .top-bar-status-active {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 3px 10px;
+          background: rgba(0, 255, 136, 0.1);
+          border: 1px solid rgba(0, 255, 136, 0.3);
+          border-radius: 4px;
+          font-size: 0.65rem;
+          font-weight: 700;
+          letter-spacing: 1px;
+          color: #00ff88;
+        }
+
+        .status-pulse-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #00ff88;
+          box-shadow: 0 0 6px #00ff88;
+          animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+
+        .oracle-subtitle-loading {
+          margin-top: var(--space-sm);
+          font-size: 0.75rem;
+          color: var(--plasma-purple);
+          letter-spacing: 3px;
+          text-transform: uppercase;
         }
 
         .flow-mode,
