@@ -18,6 +18,7 @@ import './styles/nexus-mode.css';
 import './styles/dna-panel.css';
 import './styles/modals.css';
 import './styles/settings.css';
+import './styles/landing.css';
 
 const FlowMode = lazy(() => import('./components/FlowMode'));
 const NexusMode = lazy(() => import('./components/NexusMode'));
@@ -25,6 +26,7 @@ const DNAControlPanel = lazy(() => import('./components/DNAControlPanel'));
 const AwakeningButton = lazy(() => import('./components/AwakeningButton'));
 const AuthModal = lazy(() => import('./components/AuthModal'));
 const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
+const LandingExperience = lazy(() => import('./components/LandingExperience'));
 
 const LoadingScreen: Component = () => {
   return (
@@ -96,6 +98,7 @@ const ModeLoadingFallback: Component = () => {
 interface TopBarProps {
   onAuthClick: () => void;
   onSettingsClick: () => void;
+  onGuideClick: () => void;
 }
 
 const TopBar: Component<TopBarProps> = (props) => {
@@ -114,6 +117,9 @@ const TopBar: Component<TopBarProps> = (props) => {
         </Show>
       </div>
       <div class="top-bar-right">
+        <button class="btn btn-small" onClick={props.onGuideClick} title="Open guided landing">
+          Guide
+        </button>
         <Show when={authState.isAuthenticated}>
           <div class="user-info">
             <span class="user-email">{authState.user?.email}</span>
@@ -171,6 +177,7 @@ function generateMockPopulation(count: number): StrategyDNA[] {
 }
 
 const SETTINGS_AUTO_OPEN_KEY = 'aether.settingsAutoOpened';
+const LANDING_DISMISSED_KEY = 'aether.landingDismissed.v1';
 
 const getSettingsAutoOpenFlag = () => {
   if (typeof window === 'undefined') return false;
@@ -182,10 +189,22 @@ const setSettingsAutoOpenFlag = () => {
   window.localStorage.setItem(SETTINGS_AUTO_OPEN_KEY, 'true');
 };
 
+const getLandingDismissedFlag = () => {
+  if (typeof window === 'undefined') return false;
+  return window.localStorage.getItem(LANDING_DISMISSED_KEY) === 'true';
+};
+
+const setLandingDismissedFlag = () => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(LANDING_DISMISSED_KEY, 'true');
+};
+
 const App: Component = () => {
   const [showAuthModal, setShowAuthModal] = createSignal(false);
   const [showSettings, setShowSettings] = createSignal(false);
   const [didAutoOpenSettings, setDidAutoOpenSettings] = createSignal(getSettingsAutoOpenFlag());
+  const [showLanding, setShowLanding] = createSignal(false);
+  const [activationOpenRequest, setActivationOpenRequest] = createSignal(false);
   let newsFeedCleanup: (() => void) | null = null;
   let realtimeCleanup: (() => void) | null = null;
 
@@ -202,6 +221,16 @@ const App: Component = () => {
     setShowSettings(true);
     setDidAutoOpenSettings(true);
     setSettingsAutoOpenFlag();
+  });
+
+  createEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (showLanding()) return;
+    if (getLandingDismissedFlag()) return;
+    if (state.status !== 'ready') return;
+    // Only auto-open on the guided, pre-activation stage
+    if (state.status === 'active') return;
+    setShowLanding(true);
   });
 
   onMount(() => {
@@ -347,6 +376,7 @@ const App: Component = () => {
         <TopBar
           onAuthClick={() => setShowAuthModal(true)}
           onSettingsClick={() => setShowSettings(true)}
+          onGuideClick={() => setShowLanding(true)}
         />
 
         <Suspense fallback={<ModeLoadingFallback />}>
@@ -362,7 +392,10 @@ const App: Component = () => {
             <DNAControlPanel />
           </Show>
 
-          <AwakeningButton />
+          <AwakeningButton
+            openRequest={activationOpenRequest()}
+            onOpenRequestHandled={() => setActivationOpenRequest(false)}
+          />
 
           <AuthModal
             isOpen={showAuthModal()}
@@ -372,6 +405,17 @@ const App: Component = () => {
           <SettingsPanel
             isOpen={showSettings()}
             onClose={() => setShowSettings(false)}
+          />
+
+          <LandingExperience
+            isOpen={showLanding()}
+            onClose={() => {
+              setShowLanding(false);
+              setLandingDismissedFlag();
+            }}
+            onOpenAuth={() => setShowAuthModal(true)}
+            onOpenSettings={() => setShowSettings(true)}
+            onRequestActivate={() => setActivationOpenRequest(true)}
           />
         </Suspense>
 

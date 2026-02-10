@@ -5,7 +5,7 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { Component, createSignal, Show, onCleanup } from 'solid-js';
+import { Component, createEffect, createSignal, Show, onCleanup } from 'solid-js';
 import { state, actions, FinalReport, StrategyDNA } from '../store';
 import { evolutionEngine } from '../logic/evolutionEngine';
 import { startQuantumEdgeSimulation } from '../logic/quantumEdge';
@@ -352,7 +352,12 @@ const FinalReportModal: Component<{
 // MAIN AWAKENING BUTTON COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
-const AwakeningButton: Component = () => {
+interface AwakeningButtonProps {
+  openRequest?: boolean;
+  onOpenRequestHandled?: () => void;
+}
+
+const AwakeningButton: Component<AwakeningButtonProps> = (props) => {
   const [showConfirmModal, setShowConfirmModal] = createSignal(false);
   const [isActivating, setIsActivating] = createSignal(false);
   const [activationStage, setActivationStage] = createSignal('');
@@ -366,6 +371,14 @@ const AwakeningButton: Component = () => {
   onCleanup(() => {
     quantumCleanup?.();
     newsCleanup?.();
+  });
+
+  createEffect(() => {
+    if (!props?.openRequest) return;
+    // Only allow opening during ready state and when not already activating
+    if (state.status !== 'ready' || isActivating()) return;
+    setShowConfirmModal(true);
+    props.onOpenRequestHandled?.();
   });
   
   const handleActivate = async () => {
