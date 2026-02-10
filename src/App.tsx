@@ -228,8 +228,6 @@ const App: Component = () => {
     if (showLanding()) return;
     if (getLandingDismissedFlag()) return;
     if (state.status !== 'ready') return;
-    // Only auto-open on the guided, pre-activation stage
-    if (state.status === 'active') return;
     setShowLanding(true);
   });
 
