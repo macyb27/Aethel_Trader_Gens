@@ -4,11 +4,17 @@ import type { Database } from './database.types';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+// Keep a client instance available for type-safety, but guard real usage via `isSupabaseConfigured`.
+// This prevents the whole app from hard-crashing in demo/dev environments without Supabase env vars.
+const fallbackUrl = 'http://localhost:54321';
+const fallbackAnonKey = 'public-anon-key';
+
+export const supabase = createClient<Database>(
+  supabaseUrl || fallbackUrl,
+  supabaseAnonKey || fallbackAnonKey,
+);
 
 export type ApiKeyProvider = 'BYBIT' | 'BINANCE' | 'OPENAI' | 'DEEPSEEK' | 'NEWS_API' | 'ALPHA_VANTAGE';
 
@@ -31,6 +37,7 @@ export interface UserSettings {
 }
 
 export async function getUserSettings(userId: string): Promise<UserSettings | null> {
+  if (!isSupabaseConfigured) return null;
   const { data, error } = await supabase
     .from('user_settings')
     .select('*')
@@ -49,6 +56,7 @@ export async function getUserSettings(userId: string): Promise<UserSettings | nu
 }
 
 export async function upsertUserSettings(userId: string, settings: Partial<UserSettings>) {
+  if (!isSupabaseConfigured) return { error: new Error('Supabase is not configured') };
   const { error } = await supabase
     .from('user_settings')
     .upsert({
@@ -64,6 +72,7 @@ export async function upsertUserSettings(userId: string, settings: Partial<UserS
 }
 
 export async function getApiKeys(userId: string): Promise<ApiKey[]> {
+  if (!isSupabaseConfigured) return [];
   const { data, error } = await supabase
     .from('api_keys')
     .select('id, provider, key_name, is_testnet, is_active, last_used_at, created_at')
@@ -91,6 +100,7 @@ export async function addApiKey(
   apiSecret: string | null,
   isTestnet: boolean
 ) {
+  if (!isSupabaseConfigured) return { data: null, error: new Error('Supabase is not configured') };
   const { data, error } = await supabase
     .from('api_keys')
     .insert({
@@ -109,6 +119,7 @@ export async function addApiKey(
 }
 
 export async function deleteApiKey(keyId: string) {
+  if (!isSupabaseConfigured) return { error: new Error('Supabase is not configured') };
   const { error } = await supabase
     .from('api_keys')
     .delete()
@@ -118,6 +129,7 @@ export async function deleteApiKey(keyId: string) {
 }
 
 export async function toggleApiKey(keyId: string, isActive: boolean) {
+  if (!isSupabaseConfigured) return { error: new Error('Supabase is not configured') };
   const { error } = await supabase
     .from('api_keys')
     .update({ is_active: isActive })
@@ -143,6 +155,7 @@ export async function saveStrategy(userId: string, strategy: {
   entanglementScore: number;
   isActive: boolean;
 }) {
+  if (!isSupabaseConfigured) return { data: null, error: new Error('Supabase is not configured') };
   const { data, error } = await supabase
     .from('strategies')
     .upsert({
@@ -176,6 +189,7 @@ export async function addTradingLog(
   message: string,
   data?: Record<string, unknown>
 ) {
+  if (!isSupabaseConfigured) return { error: new Error('Supabase is not configured') };
   const { error } = await supabase
     .from('trading_logs')
     .insert({
@@ -190,6 +204,7 @@ export async function addTradingLog(
 }
 
 export async function getTradingLogs(userId: string, limit = 100) {
+  if (!isSupabaseConfigured) return { data: null, error: new Error('Supabase is not configured') };
   const { data, error } = await supabase
     .from('trading_logs')
     .select('*')
@@ -243,6 +258,7 @@ export interface Transaction {
 }
 
 export async function getPaymentMethods(userId: string): Promise<PaymentMethod[]> {
+  if (!isSupabaseConfigured) return [];
   const { data, error } = await supabase
     .from('payment_methods')
     .select('*')
@@ -272,6 +288,7 @@ export async function addPaymentMethod(
   accountIdentifier: string,
   currency: Currency
 ) {
+  if (!isSupabaseConfigured) return { data: null, error: new Error('Supabase is not configured') };
   const { data, error } = await supabase
     .from('payment_methods')
     .insert({
@@ -291,6 +308,7 @@ export async function addPaymentMethod(
 }
 
 export async function deletePaymentMethod(paymentMethodId: string) {
+  if (!isSupabaseConfigured) return { error: new Error('Supabase is not configured') };
   const { error } = await supabase
     .from('payment_methods')
     .delete()
@@ -300,6 +318,7 @@ export async function deletePaymentMethod(paymentMethodId: string) {
 }
 
 export async function getWalletBalances(userId: string): Promise<WalletBalance[]> {
+  if (!isSupabaseConfigured) return [];
   const { data, error } = await supabase
     .from('wallet_balances')
     .select('*')
@@ -320,6 +339,7 @@ export async function getWalletBalances(userId: string): Promise<WalletBalance[]
 }
 
 export async function getTransactions(userId: string, limit = 50): Promise<Transaction[]> {
+  if (!isSupabaseConfigured) return [];
   const { data, error } = await supabase
     .from('transactions')
     .select('*')
@@ -352,6 +372,7 @@ export async function createTransaction(
   paymentMethodId: string | null,
   description: string
 ) {
+  if (!isSupabaseConfigured) return { data: null, error: new Error('Supabase is not configured') };
   const { data, error } = await supabase
     .from('transactions')
     .insert({

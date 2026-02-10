@@ -1,9 +1,14 @@
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
+  if (!isSupabaseConfigured) {
+    return {
+      'Content-Type': 'application/json',
+    };
+  }
   const { data: { session } } = await supabase.auth.getSession();
 
   return {
@@ -52,6 +57,9 @@ export interface Position {
 }
 
 export async function callExchangeApi<T = unknown>(request: ExchangeApiRequest): Promise<T> {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured (exchange API unavailable)');
+  }
   const headers = await getAuthHeaders();
 
   const response = await fetch(`${SUPABASE_URL}/functions/v1/exchange-api`, {
@@ -213,6 +221,7 @@ export interface SentimentResult {
 }
 
 export async function fetchNews(query?: string): Promise<{ articles: NewsArticle[]; fallback: boolean }> {
+  if (!isSupabaseConfigured) return { articles: [], fallback: true };
   const headers = await getAuthHeaders();
 
   const response = await fetch(`${SUPABASE_URL}/functions/v1/news-sentiment`, {
@@ -235,6 +244,20 @@ export async function analyzeSentiment(
   headlines: string[],
   provider?: 'OPENAI' | 'DEEPSEEK'
 ): Promise<{ results: SentimentResult[]; provider: string }> {
+  if (!isSupabaseConfigured) {
+    return {
+      results: headlines.map(() => ({
+        score: 0,
+        confidence: 0.5,
+        magnitude: 0.3,
+        keywords: [],
+        categories: ['GENERAL'],
+        impact: 'LOW' as const,
+        reasoning: 'Supabase not configured',
+      })),
+      provider: 'FALLBACK',
+    };
+  }
   const headers = await getAuthHeaders();
 
   const response = await fetch(`${SUPABASE_URL}/functions/v1/news-sentiment`, {

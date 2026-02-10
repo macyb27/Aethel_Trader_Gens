@@ -1,7 +1,16 @@
-import { createSignal, createRoot } from 'solid-js';
+import { createRoot } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import type { User, Session } from '@supabase/supabase-js';
-import { supabase, getUserSettings, upsertUserSettings, getApiKeys, type UserSettings, type ApiKey } from '../lib/supabase';
+import {
+  supabase,
+  isSupabaseConfigured,
+  getUserSettings,
+  upsertUserSettings,
+  getApiKeys,
+  type UserSettings,
+  type ApiKey,
+} from '../lib/supabase';
+import { actions as oracleActions } from './index';
 
 export interface AuthState {
   user: User | null;
@@ -26,6 +35,15 @@ function createAuthStore() {
 
   const actions = {
     async initialize() {
+      if (!isSupabaseConfigured) {
+        setState({ isLoading: false, isAuthenticated: false, user: null, session: null });
+        oracleActions.addLog(
+          'warn',
+          'AUTH',
+          'Supabase is not configured. Running in DEMO mode (sign-in disabled).',
+        );
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session) {
@@ -76,6 +94,7 @@ function createAuthStore() {
     },
 
     async signUp(email: string, password: string) {
+      if (!isSupabaseConfigured) return { error: new Error('Supabase is not configured') };
       setState({ isLoading: true });
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -102,6 +121,7 @@ function createAuthStore() {
     },
 
     async signIn(email: string, password: string) {
+      if (!isSupabaseConfigured) return { data: null, error: new Error('Supabase is not configured') };
       setState({ isLoading: true });
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -113,6 +133,7 @@ function createAuthStore() {
     },
 
     async signOut() {
+      if (!isSupabaseConfigured) return;
       await supabase.auth.signOut();
     },
 

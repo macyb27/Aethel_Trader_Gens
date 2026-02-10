@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { actions } from '../store';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -7,6 +7,10 @@ let marketChannel: RealtimeChannel | null = null;
 let strategiesChannel: RealtimeChannel | null = null;
 
 export function subscribeToTradingLogs(userId: string): () => void {
+  if (!isSupabaseConfigured) {
+    actions.addLog('warn', 'REALTIME', 'Supabase not configured: realtime disabled');
+    return () => {};
+  }
   if (logsChannel) {
     logsChannel.unsubscribe();
   }
@@ -50,6 +54,7 @@ export function subscribeToTradingLogs(userId: string): () => void {
 }
 
 export function subscribeToMarketSnapshots(userId: string): () => void {
+  if (!isSupabaseConfigured) return () => {};
   if (marketChannel) {
     marketChannel.unsubscribe();
   }
@@ -97,6 +102,7 @@ export function subscribeToMarketSnapshots(userId: string): () => void {
 }
 
 export function subscribeToStrategies(userId: string): () => void {
+  if (!isSupabaseConfigured) return () => {};
   if (strategiesChannel) {
     strategiesChannel.unsubscribe();
   }

@@ -1,4 +1,4 @@
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       user_settings: {
@@ -32,6 +32,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       api_keys: {
         Row: {
@@ -70,6 +71,7 @@ export interface Database {
           last_used_at?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       strategies: {
         Row: {
@@ -138,6 +140,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       trading_logs: {
         Row: {
@@ -167,6 +170,7 @@ export interface Database {
           data?: Record<string, unknown> | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       market_snapshots: {
         Row: {
@@ -205,7 +209,132 @@ export interface Database {
           low_24h?: number | null;
           created_at?: string;
         };
+        Relationships: [];
+      };
+      payment_methods: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: string;
+          provider: string;
+          name: string;
+          account_identifier: string;
+          currency: string;
+          is_verified: boolean;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: string;
+          provider: string;
+          name: string;
+          account_identifier: string;
+          currency: string;
+          is_verified?: boolean;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: string;
+          provider?: string;
+          name?: string;
+          account_identifier?: string;
+          currency?: string;
+          is_verified?: boolean;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      wallet_balances: {
+        Row: {
+          id: string;
+          user_id: string;
+          currency: string;
+          balance: number | string;
+          locked_balance: number | string;
+          total_deposited: number | string;
+          total_withdrawn: number | string;
+          total_pnl: number | string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          currency: string;
+          balance?: number | string;
+          locked_balance?: number | string;
+          total_deposited?: number | string;
+          total_withdrawn?: number | string;
+          total_pnl?: number | string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          currency?: string;
+          balance?: number | string;
+          locked_balance?: number | string;
+          total_deposited?: number | string;
+          total_withdrawn?: number | string;
+          total_pnl?: number | string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      transactions: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: string;
+          currency: string;
+          amount: number | string;
+          fee: number | string;
+          status: string;
+          payment_method_id: string | null;
+          payment_reference: string | null;
+          description: string | null;
+          created_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: string;
+          currency: string;
+          amount: number | string;
+          fee?: number | string;
+          status?: string;
+          payment_method_id?: string | null;
+          payment_reference?: string | null;
+          description?: string | null;
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: string;
+          currency?: string;
+          amount?: number | string;
+          fee?: number | string;
+          status?: string;
+          payment_method_id?: string | null;
+          payment_reference?: string | null;
+          description?: string | null;
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Relationships: [];
       };
     };
+    Views: {};
+    Functions: {};
+    Enums: {};
+    CompositeTypes: {};
   };
-}
+};
