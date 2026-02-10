@@ -6,7 +6,7 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { Component, onMount, onCleanup, createSignal, Show } from 'solid-js';
+import { Component, onMount, onCleanup, createEffect, createSignal, Show } from 'solid-js';
 import * as THREE from 'three';
 import { state, actions, GSMNode } from '../store';
 
@@ -21,7 +21,6 @@ class GSMSceneManager {
   private grid: THREE.GridHelper | null = null;
   private cage: THREE.LineSegments | null = null;
   private nodes: Map<string, THREE.Mesh> = new Map();
-  private selectedNode: THREE.Mesh | null = null;
   private raycaster: THREE.Raycaster;
   private mouse: THREE.Vector2;
   private animationId: number | null = null;
@@ -230,6 +229,14 @@ class GSMSceneManager {
     this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   };
+
+  public getHoveredNodeId(): string | null {
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    const intersects = this.raycaster.intersectObjects(Array.from(this.nodes.values()));
+    if (intersects.length === 0) return null;
+    const mesh = intersects[0].object as THREE.Mesh;
+    return (mesh.userData?.nodeId as string) || null;
+  }
   
   public animate = (): void => {
     this.animationId = requestAnimationFrame(this.animate);
@@ -340,6 +347,37 @@ const NexusMode: Component = () => {
       }
     });
   });
+
+  // Keep Three.js scene in sync with reactive store
+  createEffect(() => {
+    if (!sceneManager) return;
+    // Track dependency
+    const nodes = state.gsmNodes;
+    sceneManager.updateNodes(nodes);
+  });
+
+  // Lightweight hover detection for self-explaining UI
+  onMount(() => {
+    let raf: number | null = null;
+    let lastId: string | null = null;
+
+    const tick = () => {
+      if (sceneManager) {
+        const id = sceneManager.getHoveredNodeId();
+        if (id !== lastId) {
+          lastId = id;
+          setHoveredNode(id ? (state.gsmNodes.find(n => n.id === id) ?? null) : null);
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    tick();
+
+    onCleanup(() => {
+      if (raf) cancelAnimationFrame(raf);
+    });
+  });
   
   // Update nodes when population changes
   // Note: In production, use createEffect for reactive updates
@@ -349,6 +387,10 @@ const NexusMode: Component = () => {
       <div ref={containerRef} class="nexus-canvas-container" />
       
       <div class="nexus-overlay">
+        <Show when={!isInitialized()}>
+          <div class="nexus-init-hint">Initializing 3D Matrix…</div>
+        </Show>
+
         {/* Header */}
         <div class="nexus-header">
           <h2 class="nexus-title">
@@ -399,6 +441,30 @@ const NexusMode: Component = () => {
             </div>
           </div>
         </Show>
+
+        {/* Hover Node Info */}
+        <Show when={hoveredNode() && !state.selectedNodeId}>
+          <div class="nexus-hover-info">
+            <div class="selection-header">
+              <span class="selection-icon">◈</span>
+              Hover Genome
+            </div>
+            <div class="selection-body">
+              <div class="selection-row">
+                <span class="selection-label">ID</span>
+                <span class="selection-value">{hoveredNode()!.id}</span>
+              </div>
+              <div class="selection-row">
+                <span class="selection-label">Sharpe</span>
+                <span class="selection-value">{hoveredNode()!.sharpeRatio.toFixed(2)}</span>
+              </div>
+              <div class="selection-row">
+                <span class="selection-label">Entangle</span>
+                <span class="selection-value">{hoveredNode()!.z.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </Show>
         
         {/* Legend */}
         <div class="nexus-legend">
@@ -420,6 +486,33 @@ const NexusMode: Component = () => {
           <p>Click on nodes to select strategies</p>
           <p>Z-Axis represents Quantum Entanglement Score</p>
         </div>
+
+        <style>{`
+          .nexus-init-hint {
+            position: absolute;
+            top: 72px;
+            right: 24px;
+            padding: 10px 12px;
+            border: 1px solid rgba(0, 243, 255, 0.25);
+            background: rgba(5, 5, 5, 0.7);
+            color: rgba(0, 243, 255, 0.9);
+            border-radius: 10px;
+            font-size: 0.8rem;
+            backdrop-filter: blur(8px);
+          }
+
+          .nexus-hover-info {
+            position: absolute;
+            right: 24px;
+            bottom: 120px;
+            width: 260px;
+            border: 1px solid var(--border-color);
+            background: rgba(10, 10, 10, 0.85);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            backdrop-filter: blur(10px);
+          }
+        `}</style>
       </div>
     </div>
   );

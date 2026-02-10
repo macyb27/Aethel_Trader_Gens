@@ -30,6 +30,11 @@ export class BinanceConnector implements IExchangeConnector {
 
   async connect(): Promise<void> {
     // Platzhalter: In Produktion WebSocket/REST für Order-Status
+    // Read config to avoid unused-field TS errors and to keep behavior explicit.
+    // In Live-Mode würde hier u.a. `testnet` die Basis-URL beeinflussen.
+    if (this._config.testnet) {
+      // no-op (placeholder)
+    }
     this.connected = true;
   }
 

@@ -1,4 +1,16 @@
-export interface Database {
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+// NOTE:
+// This file intentionally mirrors the shape of Supabase-generated `database.types.ts`.
+// Supabase JS relies on the `public.{Tables,Views,Functions,Enums,CompositeTypes}` keys
+// for strong typing. If the shape is incomplete, table types degrade to `never`.
+export type Database = {
   public: {
     Tables: {
       user_settings: {
@@ -32,7 +44,9 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
+
       api_keys: {
         Row: {
           id: string;
@@ -70,7 +84,9 @@ export interface Database {
           last_used_at?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
+
       strategies: {
         Row: {
           id: string;
@@ -138,7 +154,9 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
+
       trading_logs: {
         Row: {
           id: string;
@@ -146,7 +164,7 @@ export interface Database {
           level: string;
           source: string;
           message: string;
-          data: Record<string, unknown> | null;
+          data: Json | null;
           created_at: string;
         };
         Insert: {
@@ -155,7 +173,7 @@ export interface Database {
           level?: string;
           source?: string;
           message: string;
-          data?: Record<string, unknown> | null;
+          data?: Json | null;
           created_at?: string;
         };
         Update: {
@@ -164,10 +182,12 @@ export interface Database {
           level?: string;
           source?: string;
           message?: string;
-          data?: Record<string, unknown> | null;
+          data?: Json | null;
           created_at?: string;
         };
+        Relationships: [];
       };
+
       market_snapshots: {
         Row: {
           id: string;
@@ -205,7 +225,143 @@ export interface Database {
           low_24h?: number | null;
           created_at?: string;
         };
+        Relationships: [];
+      };
+
+      payment_methods: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: string;
+          provider: string;
+          name: string;
+          account_identifier: string;
+          currency: string;
+          is_verified: boolean;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: string;
+          provider: string;
+          name: string;
+          account_identifier: string;
+          currency: string;
+          is_verified?: boolean;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: string;
+          provider?: string;
+          name?: string;
+          account_identifier?: string;
+          currency?: string;
+          is_verified?: boolean;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      wallet_balances: {
+        Row: {
+          id: string;
+          user_id: string;
+          currency: string;
+          balance: number;
+          locked_balance: number;
+          total_deposited: number;
+          total_withdrawn: number;
+          total_pnl: number;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          currency: string;
+          balance?: number;
+          locked_balance?: number;
+          total_deposited?: number;
+          total_withdrawn?: number;
+          total_pnl?: number;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          currency?: string;
+          balance?: number;
+          locked_balance?: number;
+          total_deposited?: number;
+          total_withdrawn?: number;
+          total_pnl?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      transactions: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: string;
+          currency: string;
+          amount: number;
+          fee: number;
+          status: string;
+          payment_method_id: string | null;
+          payment_reference: string | null;
+          description: string | null;
+          created_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: string;
+          currency: string;
+          amount: number;
+          fee?: number;
+          status: string;
+          payment_method_id?: string | null;
+          payment_reference?: string | null;
+          description?: string | null;
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: string;
+          currency?: string;
+          amount?: number;
+          fee?: number;
+          status?: string;
+          payment_method_id?: string | null;
+          payment_reference?: string | null;
+          description?: string | null;
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Relationships: [];
       };
     };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
-}
+};

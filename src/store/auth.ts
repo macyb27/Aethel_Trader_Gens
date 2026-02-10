@@ -1,4 +1,4 @@
-import { createSignal, createRoot } from 'solid-js';
+import { createRoot } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase, getUserSettings, upsertUserSettings, getApiKeys, type UserSettings, type ApiKey } from '../lib/supabase';

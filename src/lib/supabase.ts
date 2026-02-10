@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from './database.types';
+import type { Database, Json } from './database.types';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -174,7 +174,7 @@ export async function addTradingLog(
   level: string,
   source: string,
   message: string,
-  data?: Record<string, unknown>
+  data?: Json
 ) {
   const { error } = await supabase
     .from('trading_logs')
@@ -310,11 +310,11 @@ export async function getWalletBalances(userId: string): Promise<WalletBalance[]
   return data.map((wb) => ({
     id: wb.id,
     currency: wb.currency as Currency,
-    balance: parseFloat(wb.balance as string) || 0,
-    lockedBalance: parseFloat(wb.locked_balance as string) || 0,
-    totalDeposited: parseFloat(wb.total_deposited as string) || 0,
-    totalWithdrawn: parseFloat(wb.total_withdrawn as string) || 0,
-    totalPnl: parseFloat(wb.total_pnl as string) || 0,
+    balance: Number(wb.balance) || 0,
+    lockedBalance: Number(wb.locked_balance) || 0,
+    totalDeposited: Number(wb.total_deposited) || 0,
+    totalWithdrawn: Number(wb.total_withdrawn) || 0,
+    totalPnl: Number(wb.total_pnl) || 0,
     updatedAt: wb.updated_at,
   }));
 }
@@ -333,8 +333,8 @@ export async function getTransactions(userId: string, limit = 50): Promise<Trans
     id: tx.id,
     type: tx.type as TransactionType,
     currency: tx.currency as Currency,
-    amount: parseFloat(tx.amount as string) || 0,
-    fee: parseFloat(tx.fee as string) || 0,
+    amount: Number(tx.amount) || 0,
+    fee: Number(tx.fee) || 0,
     status: tx.status as TransactionStatus,
     paymentMethodId: tx.payment_method_id,
     paymentReference: tx.payment_reference,

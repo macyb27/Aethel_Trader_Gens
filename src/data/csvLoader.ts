@@ -124,18 +124,23 @@ export async function loadCandlesFromFile(
 ): Promise<Candle[]> {
   const isUrl = pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://');
 
-  if (typeof fetch !== 'undefined' && isUrl) {
-    const res = await fetch(pathOrUrl);
-    const text = await res.text();
-    return loadCandlesFromCsv(text, options);
-  }
-
-  // Node.js: fs (dynamic import to avoid issues in browser builds)
-  if (typeof process !== 'undefined' && process.versions?.node) {
-    const fs = await import('fs/promises');
+  // Node (SSR / CLI): read from filesystem
+  // Vite will tree-shake this branch out of the browser build.
+  if (!isUrl && import.meta.env.SSR) {
+    const fs = await import('node:fs/promises');
     const content = await fs.readFile(pathOrUrl, 'utf-8');
     return loadCandlesFromCsv(content, options);
   }
 
-  throw new Error('loadCandlesFromFile requires fetch (browser) or Node.js fs');
+  // Browser (or URL in Node): fetch content (supports absolute + relative URLs)
+  if (typeof fetch !== 'undefined') {
+    const res = await fetch(pathOrUrl);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch CSV: ${res.status} ${res.statusText}`);
+    }
+    const text = await res.text();
+    return loadCandlesFromCsv(text, options);
+  }
+
+  throw new Error('loadCandlesFromFile requires fetch (browser) or SSR fs');
 }
