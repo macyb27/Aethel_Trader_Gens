@@ -1,0 +1,150 @@
+.assistant-panel {
+  margin-top: var(--space-md);
+}
+
+.assistant-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.assistant-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.assistant-collapse {
+  min-width: 32px;
+}
+
+.assistant-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.assistant-headline {
+  font-family: var(--font-display);
+  letter-spacing: 1px;
+  color: var(--neon-cyan);
+  text-shadow: var(--glow-cyan);
+}
+
+.assistant-summary {
+  white-space: pre-wrap;
+  background: rgba(10, 10, 10, 0.6);
+  border: 1px solid rgba(0, 243, 255, 0.15);
+  border-radius: 8px;
+  padding: var(--space-sm);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.assistant-section-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.assistant-last-event {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.assistant-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.assistant-suggestion {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--space-sm);
+  border-radius: 10px;
+  border: 1px solid rgba(128, 128, 128, 0.18);
+  background: rgba(13, 13, 18, 0.6);
+}
+
+.assistant-suggestion.info {
+  border-color: rgba(0, 243, 255, 0.25);
+}
+
+.assistant-suggestion.warn {
+  border-color: rgba(255, 170, 0, 0.35);
+}
+
+.assistant-suggestion.critical {
+  border-color: rgba(255, 0, 64, 0.35);
+  box-shadow: var(--glow-red);
+}
+
+.assistant-suggestion-title {
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.assistant-suggestion-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.assistant-footer {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+}
+
+.guide-modal {
+  width: min(520px, calc(100vw - 32px));
+}
+
+.guide-steps {
+  display: flex;
+  gap: 8px;
+  padding: 0 var(--space-lg);
+  margin-top: var(--space-sm);
+}
+
+.guide-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(128, 128, 128, 0.35);
+}
+
+.guide-dot.active {
+  background: var(--neon-cyan);
+  box-shadow: var(--glow-cyan);
+}
+
+.guide-body {
+  padding: var(--space-md) var(--space-lg);
+}
+
+.guide-title {
+  font-family: var(--font-display);
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.guide-list {
+  margin-left: 18px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.guide-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+}
+

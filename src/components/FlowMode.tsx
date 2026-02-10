@@ -7,6 +7,7 @@
 
 import { Component, For, Show, createSignal, onMount, onCleanup } from 'solid-js';
 import { state, actions, LogEntry } from '../store';
+import OracleAssistPanel from './OracleAssistPanel';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LOG ENTRY COMPONENT
@@ -364,6 +365,7 @@ const FlowMode: Component = () => {
         <div class="flow-sidebar">
           <MetricsPanel />
           <PortfolioPanel />
+          <OracleAssistPanel />
         </div>
       </div>
     </div>

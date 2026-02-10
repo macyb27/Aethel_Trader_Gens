@@ -25,6 +25,7 @@ const DNAControlPanel = lazy(() => import('./components/DNAControlPanel'));
 const AwakeningButton = lazy(() => import('./components/AwakeningButton'));
 const AuthModal = lazy(() => import('./components/AuthModal'));
 const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
+const GuideModal = lazy(() => import('./components/GuideModal'));
 
 const LoadingScreen: Component = () => {
   return (
@@ -96,6 +97,7 @@ const ModeLoadingFallback: Component = () => {
 interface TopBarProps {
   onAuthClick: () => void;
   onSettingsClick: () => void;
+  onGuideClick: () => void;
 }
 
 const TopBar: Component<TopBarProps> = (props) => {
@@ -117,6 +119,9 @@ const TopBar: Component<TopBarProps> = (props) => {
         <Show when={authState.isAuthenticated}>
           <div class="user-info">
             <span class="user-email">{authState.user?.email}</span>
+            <button class="btn btn-small" onClick={props.onGuideClick}>
+              Guide
+            </button>
             <button class="btn btn-small" onClick={props.onSettingsClick}>
               Settings
             </button>
@@ -126,6 +131,9 @@ const TopBar: Component<TopBarProps> = (props) => {
           </div>
         </Show>
         <Show when={!authState.isAuthenticated && !authState.isLoading}>
+          <button class="btn btn-small" onClick={props.onGuideClick}>
+            Guide
+          </button>
           <button class="btn btn-primary btn-small" onClick={props.onAuthClick}>
             Sign In
           </button>
@@ -171,6 +179,7 @@ function generateMockPopulation(count: number): StrategyDNA[] {
 }
 
 const SETTINGS_AUTO_OPEN_KEY = 'aether.settingsAutoOpened';
+const GUIDE_SEEN_KEY = 'aether.guideSeen';
 
 const getSettingsAutoOpenFlag = () => {
   if (typeof window === 'undefined') return false;
@@ -182,10 +191,22 @@ const setSettingsAutoOpenFlag = () => {
   window.localStorage.setItem(SETTINGS_AUTO_OPEN_KEY, 'true');
 };
 
+const getGuideSeenFlag = () => {
+  if (typeof window === 'undefined') return false;
+  return window.localStorage.getItem(GUIDE_SEEN_KEY) === 'true';
+};
+
+const setGuideSeenFlag = () => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(GUIDE_SEEN_KEY, 'true');
+};
+
 const App: Component = () => {
   const [showAuthModal, setShowAuthModal] = createSignal(false);
   const [showSettings, setShowSettings] = createSignal(false);
+  const [showGuide, setShowGuide] = createSignal(false);
   const [didAutoOpenSettings, setDidAutoOpenSettings] = createSignal(getSettingsAutoOpenFlag());
+  const [didSeeGuide, setDidSeeGuide] = createSignal(getGuideSeenFlag());
   let newsFeedCleanup: (() => void) | null = null;
   let realtimeCleanup: (() => void) | null = null;
 
@@ -202,6 +223,15 @@ const App: Component = () => {
     setShowSettings(true);
     setDidAutoOpenSettings(true);
     setSettingsAutoOpenFlag();
+  });
+
+  createEffect(() => {
+    if (didSeeGuide()) return;
+    if (state.status === 'initializing') return;
+    // Show the guide once after the first successful initialization.
+    setShowGuide(true);
+    setDidSeeGuide(true);
+    setGuideSeenFlag();
   });
 
   onMount(() => {
@@ -267,6 +297,25 @@ const App: Component = () => {
     }, 50);
 
     return () => clearInterval(interval);
+  });
+
+  onMount(() => {
+    const openSettings = () => setShowSettings(true);
+    const openAuth = () => setShowAuthModal(true);
+    const showGuideHandler = () => setShowGuide(true);
+    const activateOracle = () => actions.showAwakening(true);
+
+    window.addEventListener('aether:open-settings', openSettings);
+    window.addEventListener('aether:open-auth', openAuth);
+    window.addEventListener('aether:show-guide', showGuideHandler);
+    window.addEventListener('aether:activate-oracle', activateOracle);
+
+    onCleanup(() => {
+      window.removeEventListener('aether:open-settings', openSettings);
+      window.removeEventListener('aether:open-auth', openAuth);
+      window.removeEventListener('aether:show-guide', showGuideHandler);
+      window.removeEventListener('aether:activate-oracle', activateOracle);
+    });
   });
 
   onMount(() => {
@@ -347,6 +396,7 @@ const App: Component = () => {
         <TopBar
           onAuthClick={() => setShowAuthModal(true)}
           onSettingsClick={() => setShowSettings(true)}
+          onGuideClick={() => setShowGuide(true)}
         />
 
         <Suspense fallback={<ModeLoadingFallback />}>
@@ -372,6 +422,11 @@ const App: Component = () => {
           <SettingsPanel
             isOpen={showSettings()}
             onClose={() => setShowSettings(false)}
+          />
+
+          <GuideModal
+            isOpen={showGuide()}
+            onClose={() => setShowGuide(false)}
           />
         </Suspense>
 
