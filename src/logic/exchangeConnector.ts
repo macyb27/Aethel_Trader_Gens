@@ -660,3 +660,6 @@ class ExchangeManager {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const exchangeManager = new ExchangeManager();
+
+// Re-export order placement interface (AETHER_TRADE_ARCHITEKTUR spec)
+export type { ExchangeConnector } from "./orderExchangeConnector";
