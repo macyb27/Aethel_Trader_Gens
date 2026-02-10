@@ -1,6 +1,6 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- * ÆTHER-TRADER Ω v4.0 - MAIN APPLICATION
+ * AETHER-TRADER v4.0 - MAIN APPLICATION
  * Self-Aware Market Oracle with Quantum-Inspired Trading Intelligence
  * Full-Stack Version with Real API Support
  * ═══════════════════════════════════════════════════════════════════════════
@@ -13,6 +13,7 @@ import { subscribeToAllChannels, unsubscribeAll } from './services/realtime';
 import { exchangeManager } from './logic/exchangeConnector';
 import { startNewsFeedSimulation, startRealNewsFeed, newsOracle } from './logic/newsOracle';
 import './index.css';
+import './styles/landing.css';
 import './styles/flow-mode.css';
 import './styles/nexus-mode.css';
 import './styles/dna-panel.css';
@@ -25,6 +26,27 @@ const DNAControlPanel = lazy(() => import('./components/DNAControlPanel'));
 const AwakeningButton = lazy(() => import('./components/AwakeningButton'));
 const AuthModal = lazy(() => import('./components/AuthModal'));
 const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
+const LandingPage = lazy(() => import('./components/LandingPage'));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LANDING PAGE STATE
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SHOW_LANDING_KEY = 'aether.showLanding';
+
+function getShowLanding(): boolean {
+  if (typeof window === 'undefined') return true;
+  return window.localStorage.getItem(SHOW_LANDING_KEY) !== 'false';
+}
+
+function setShowLandingStorage(show: boolean) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(SHOW_LANDING_KEY, show ? 'true' : 'false');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INTERNAL COMPONENTS
+// ─────────────────────────────────────────────────────────────────────────────
 
 const LoadingScreen: Component = () => {
   return (
@@ -32,7 +54,7 @@ const LoadingScreen: Component = () => {
       <div class="oracle-spinner">
         <div class="oracle-spinner-core" />
       </div>
-      <h1 class="oracle-title">ÆTHER-TRADER</h1>
+      <h1 class="oracle-title">AETHER-TRADER</h1>
       <p class="oracle-status">Oracle Initializing...</p>
       <p class="oracle-agents">
         {state.agentsSpawned} / {state.totalAgents} Agents
@@ -96,6 +118,7 @@ const ModeLoadingFallback: Component = () => {
 interface TopBarProps {
   onAuthClick: () => void;
   onSettingsClick: () => void;
+  onBackToLanding: () => void;
 }
 
 const TopBar: Component<TopBarProps> = (props) => {
@@ -105,7 +128,10 @@ const TopBar: Component<TopBarProps> = (props) => {
   return (
     <div class="top-bar">
       <div class="top-bar-left">
-        <span class="app-logo">ÆTHER</span>
+        <button class="top-bar-back" onClick={props.onBackToLanding} title="Back to Landing Page">
+          &#926;
+        </button>
+        <span class="app-logo">AETHER</span>
         <Show when={isRealMode()}>
           <span class="mode-badge real">LIVE</span>
         </Show>
@@ -182,12 +208,31 @@ const setSettingsAutoOpenFlag = () => {
   window.localStorage.setItem(SETTINGS_AUTO_OPEN_KEY, 'true');
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN APP
+// ─────────────────────────────────────────────────────────────────────────────
+
 const App: Component = () => {
+  const [showLanding, setShowLanding] = createSignal(getShowLanding());
   const [showAuthModal, setShowAuthModal] = createSignal(false);
   const [showSettings, setShowSettings] = createSignal(false);
   const [didAutoOpenSettings, setDidAutoOpenSettings] = createSignal(getSettingsAutoOpenFlag());
+  const [appInitialized, setAppInitialized] = createSignal(false);
   let newsFeedCleanup: (() => void) | null = null;
   let realtimeCleanup: (() => void) | null = null;
+
+  const enterApp = () => {
+    setShowLanding(false);
+    setShowLandingStorage(false);
+    if (!appInitialized()) {
+      initializeApp();
+    }
+  };
+
+  const backToLanding = () => {
+    setShowLanding(true);
+    setShowLandingStorage(true);
+  };
 
   onMount(() => {
     authActions.initialize();
@@ -204,7 +249,10 @@ const App: Component = () => {
     setSettingsAutoOpenFlag();
   });
 
-  onMount(() => {
+  const initializeApp = () => {
+    if (appInitialized()) return;
+    setAppInitialized(true);
+
     let agents = 0;
     const interval = setInterval(() => {
       agents += Math.floor(Math.random() * 15) + 5;
@@ -265,12 +313,18 @@ const App: Component = () => {
 
       actions.updateLoadingProgress(agents, (agents / state.totalAgents) * 100);
     }, 50);
+  };
 
-    return () => clearInterval(interval);
+  // Initialize app immediately if not showing landing
+  onMount(() => {
+    if (!showLanding()) {
+      initializeApp();
+    }
   });
 
   onMount(() => {
     const handleKeydown = (e: KeyboardEvent) => {
+      if (showLanding()) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
@@ -302,6 +356,7 @@ const App: Component = () => {
 
   onMount(() => {
     const logInterval = setInterval(() => {
+      if (showLanding()) return;
       if (state.status === 'active' && Math.random() > 0.7) {
         const logTypes = [
           { level: 'info' as const, source: 'MARKET', messages: [
@@ -339,47 +394,58 @@ const App: Component = () => {
 
   return (
     <div class="app-container">
-      <Show when={state.status === 'initializing'}>
-        <LoadingScreen />
-      </Show>
-
-      <Show when={state.status !== 'initializing'}>
-        <TopBar
-          onAuthClick={() => setShowAuthModal(true)}
-          onSettingsClick={() => setShowSettings(true)}
-        />
-
+      {/* ── LANDING PAGE ── */}
+      <Show when={showLanding()}>
         <Suspense fallback={<ModeLoadingFallback />}>
-          <Show when={state.mode === 'flow'}>
-            <FlowMode />
-          </Show>
-
-          <Show when={state.mode === 'nexus'}>
-            <NexusMode />
-          </Show>
-
-          <Show when={state.status === 'active'}>
-            <DNAControlPanel />
-          </Show>
-
-          <AwakeningButton />
-
-          <AuthModal
-            isOpen={showAuthModal()}
-            onClose={() => setShowAuthModal(false)}
-          />
-
-          <SettingsPanel
-            isOpen={showSettings()}
-            onClose={() => setShowSettings(false)}
-          />
+          <LandingPage onEnterApp={enterApp} />
         </Suspense>
-
-        <HotkeyHints />
       </Show>
 
-      <ModeTransition />
-      <CrisisOverlay />
+      {/* ── TRADING APP ── */}
+      <Show when={!showLanding()}>
+        <Show when={state.status === 'initializing'}>
+          <LoadingScreen />
+        </Show>
+
+        <Show when={state.status !== 'initializing'}>
+          <TopBar
+            onAuthClick={() => setShowAuthModal(true)}
+            onSettingsClick={() => setShowSettings(true)}
+            onBackToLanding={backToLanding}
+          />
+
+          <Suspense fallback={<ModeLoadingFallback />}>
+            <Show when={state.mode === 'flow'}>
+              <FlowMode />
+            </Show>
+
+            <Show when={state.mode === 'nexus'}>
+              <NexusMode />
+            </Show>
+
+            <Show when={state.status === 'active'}>
+              <DNAControlPanel />
+            </Show>
+
+            <AwakeningButton />
+
+            <AuthModal
+              isOpen={showAuthModal()}
+              onClose={() => setShowAuthModal(false)}
+            />
+
+            <SettingsPanel
+              isOpen={showSettings()}
+              onClose={() => setShowSettings(false)}
+            />
+          </Suspense>
+
+          <HotkeyHints />
+        </Show>
+
+        <ModeTransition />
+        <CrisisOverlay />
+      </Show>
 
       <style>{`
         .mode-loading {
@@ -414,7 +480,7 @@ const App: Component = () => {
           right: 0;
           height: 48px;
           background: rgba(5, 5, 5, 0.95);
-          border-bottom: 1px solid var(--border-color);
+          border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.06));
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -429,6 +495,28 @@ const App: Component = () => {
           gap: var(--space-md);
         }
 
+        .top-bar-back {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          border: 1px solid rgba(0, 243, 255, 0.2);
+          background: transparent;
+          color: #00f3ff;
+          font-size: 1rem;
+          font-weight: 700;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+
+        .top-bar-back:hover {
+          background: rgba(0, 243, 255, 0.1);
+          border-color: #00f3ff;
+          box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+        }
+
         .app-logo {
           font-family: 'Orbitron', sans-serif;
           font-size: 1.1rem;
@@ -440,7 +528,7 @@ const App: Component = () => {
         .mode-badge {
           font-size: 0.65rem;
           padding: 2px 8px;
-          border-radius: var(--radius-sm);
+          border-radius: 4px;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 1px;
