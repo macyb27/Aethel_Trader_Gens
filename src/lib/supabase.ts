@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from './database.types';
+import type { Database, Json } from './database.types';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -9,6 +9,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+
+type UserSettingsRow = Database['public']['Tables']['user_settings']['Row'];
+type ApiKeyRow = Database['public']['Tables']['api_keys']['Row'];
+type PaymentMethodRow = Database['public']['Tables']['payment_methods']['Row'];
+type WalletBalanceRow = Database['public']['Tables']['wallet_balances']['Row'];
+type TransactionRow = Database['public']['Tables']['transactions']['Row'];
 
 export type ApiKeyProvider = 'BYBIT' | 'BINANCE' | 'OPENAI' | 'DEEPSEEK' | 'NEWS_API' | 'ALPHA_VANTAGE';
 
@@ -30,6 +36,12 @@ export interface UserSettings {
   notificationsEnabled: boolean;
 }
 
+function toNumber(value: number | string | null | undefined): number {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') return parseFloat(value) || 0;
+  return 0;
+}
+
 export async function getUserSettings(userId: string): Promise<UserSettings | null> {
   const { data, error } = await supabase
     .from('user_settings')
@@ -37,14 +49,15 @@ export async function getUserSettings(userId: string): Promise<UserSettings | nu
     .eq('id', userId)
     .maybeSingle();
 
-  if (error || !data) return null;
+  const row = data as UserSettingsRow | null;
+  if (error || !row) return null;
 
   return {
-    theme: data.theme || 'dark',
-    defaultExchange: data.default_exchange || 'BYBIT',
-    riskTolerance: data.risk_tolerance || 0.5,
-    autoTrade: data.auto_trade || false,
-    notificationsEnabled: data.notifications_enabled || true,
+    theme: row.theme ?? 'dark',
+    defaultExchange: row.default_exchange ?? 'BYBIT',
+    riskTolerance: row.risk_tolerance ?? 0.5,
+    autoTrade: row.auto_trade ?? false,
+    notificationsEnabled: row.notifications_enabled ?? true,
   };
 }
 
@@ -70,14 +83,15 @@ export async function getApiKeys(userId: string): Promise<ApiKey[]> {
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
-  if (error || !data) return [];
+  const rows = (data ?? []) as ApiKeyRow[];
+  if (error || rows.length === 0) return [];
 
-  return data.map((key) => ({
+  return rows.map((key) => ({
     id: key.id,
     provider: key.provider as ApiKeyProvider,
     keyName: key.key_name,
-    isTestnet: key.is_testnet || false,
-    isActive: key.is_active || true,
+    isTestnet: key.is_testnet ?? false,
+    isActive: key.is_active ?? true,
     lastUsedAt: key.last_used_at,
     createdAt: key.created_at,
   }));
@@ -183,7 +197,7 @@ export async function addTradingLog(
       level,
       source,
       message,
-      data: data || null,
+      data: (data ?? null) as Json | null,
     });
 
   return { error };
@@ -249,17 +263,18 @@ export async function getPaymentMethods(userId: string): Promise<PaymentMethod[]
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
-  if (error || !data) return [];
+  const rows = (data ?? []) as PaymentMethodRow[];
+  if (error || rows.length === 0) return [];
 
-  return data.map((pm) => ({
+  return rows.map((pm) => ({
     id: pm.id,
     type: pm.type as PaymentMethodType,
     provider: pm.provider,
     name: pm.name,
     accountIdentifier: pm.account_identifier,
     currency: pm.currency as Currency,
-    isVerified: pm.is_verified,
-    isActive: pm.is_active,
+    isVerified: pm.is_verified ?? false,
+    isActive: pm.is_active ?? true,
     createdAt: pm.created_at,
   }));
 }
@@ -305,16 +320,17 @@ export async function getWalletBalances(userId: string): Promise<WalletBalance[]
     .select('*')
     .eq('user_id', userId);
 
-  if (error || !data) return [];
+  const rows = (data ?? []) as WalletBalanceRow[];
+  if (error || rows.length === 0) return [];
 
-  return data.map((wb) => ({
+  return rows.map((wb) => ({
     id: wb.id,
     currency: wb.currency as Currency,
-    balance: parseFloat(wb.balance as string) || 0,
-    lockedBalance: parseFloat(wb.locked_balance as string) || 0,
-    totalDeposited: parseFloat(wb.total_deposited as string) || 0,
-    totalWithdrawn: parseFloat(wb.total_withdrawn as string) || 0,
-    totalPnl: parseFloat(wb.total_pnl as string) || 0,
+    balance: toNumber(wb.balance),
+    lockedBalance: toNumber(wb.locked_balance),
+    totalDeposited: toNumber(wb.total_deposited),
+    totalWithdrawn: toNumber(wb.total_withdrawn),
+    totalPnl: toNumber(wb.total_pnl),
     updatedAt: wb.updated_at,
   }));
 }
@@ -327,14 +343,15 @@ export async function getTransactions(userId: string, limit = 50): Promise<Trans
     .order('created_at', { ascending: false })
     .limit(limit);
 
-  if (error || !data) return [];
+  const rows = (data ?? []) as TransactionRow[];
+  if (error || rows.length === 0) return [];
 
-  return data.map((tx) => ({
+  return rows.map((tx) => ({
     id: tx.id,
     type: tx.type as TransactionType,
     currency: tx.currency as Currency,
-    amount: parseFloat(tx.amount as string) || 0,
-    fee: parseFloat(tx.fee as string) || 0,
+    amount: toNumber(tx.amount),
+    fee: toNumber(tx.fee),
     status: tx.status as TransactionStatus,
     paymentMethodId: tx.payment_method_id,
     paymentReference: tx.payment_reference,

@@ -25,6 +25,7 @@ const DNAControlPanel = lazy(() => import('./components/DNAControlPanel'));
 const AwakeningButton = lazy(() => import('./components/AwakeningButton'));
 const AuthModal = lazy(() => import('./components/AuthModal'));
 const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
+const LandingExperience = lazy(() => import('./components/LandingExperience'));
 
 const LoadingScreen: Component = () => {
   return (
@@ -96,6 +97,7 @@ const ModeLoadingFallback: Component = () => {
 interface TopBarProps {
   onAuthClick: () => void;
   onSettingsClick: () => void;
+  onLogoClick: () => void;
 }
 
 const TopBar: Component<TopBarProps> = (props) => {
@@ -105,7 +107,9 @@ const TopBar: Component<TopBarProps> = (props) => {
   return (
     <div class="top-bar">
       <div class="top-bar-left">
-        <span class="app-logo">ÆTHER</span>
+        <button class="app-logo" onClick={props.onLogoClick} title="Back to landing page">
+          ÆTHER
+        </button>
         <Show when={isRealMode()}>
           <span class="mode-badge real">LIVE</span>
         </Show>
@@ -171,6 +175,7 @@ function generateMockPopulation(count: number): StrategyDNA[] {
 }
 
 const SETTINGS_AUTO_OPEN_KEY = 'aether.settingsAutoOpened';
+const LANDING_DISMISSED_KEY = 'aether.landingDismissed';
 
 const getSettingsAutoOpenFlag = () => {
   if (typeof window === 'undefined') return false;
@@ -182,12 +187,37 @@ const setSettingsAutoOpenFlag = () => {
   window.localStorage.setItem(SETTINGS_AUTO_OPEN_KEY, 'true');
 };
 
+const getLandingDismissedFlag = () => {
+  if (typeof window === 'undefined') return false;
+  return window.localStorage.getItem(LANDING_DISMISSED_KEY) === 'true';
+};
+
+const setLandingDismissedFlag = (dismissed: boolean) => {
+  if (typeof window === 'undefined') return;
+  if (dismissed) {
+    window.localStorage.setItem(LANDING_DISMISSED_KEY, 'true');
+  } else {
+    window.localStorage.removeItem(LANDING_DISMISSED_KEY);
+  }
+};
+
 const App: Component = () => {
   const [showAuthModal, setShowAuthModal] = createSignal(false);
   const [showSettings, setShowSettings] = createSignal(false);
+  const [showLanding, setShowLanding] = createSignal(!getLandingDismissedFlag());
   const [didAutoOpenSettings, setDidAutoOpenSettings] = createSignal(getSettingsAutoOpenFlag());
   let newsFeedCleanup: (() => void) | null = null;
   let realtimeCleanup: (() => void) | null = null;
+
+  const enterWorkspace = () => {
+    setShowLanding(false);
+    setLandingDismissedFlag(true);
+  };
+
+  const openLanding = () => {
+    setShowLanding(true);
+    setLandingDismissedFlag(false);
+  };
 
   onMount(() => {
     authActions.initialize();
@@ -344,25 +374,55 @@ const App: Component = () => {
       </Show>
 
       <Show when={state.status !== 'initializing'}>
-        <TopBar
-          onAuthClick={() => setShowAuthModal(true)}
-          onSettingsClick={() => setShowSettings(true)}
-        />
+        <Show
+          when={showLanding()}
+          fallback={
+            <>
+              <TopBar
+                onAuthClick={() => setShowAuthModal(true)}
+                onSettingsClick={() => setShowSettings(true)}
+                onLogoClick={openLanding}
+              />
 
-        <Suspense fallback={<ModeLoadingFallback />}>
-          <Show when={state.mode === 'flow'}>
-            <FlowMode />
-          </Show>
+              <Suspense fallback={<ModeLoadingFallback />}>
+                <Show when={state.mode === 'flow'}>
+                  <FlowMode />
+                </Show>
 
-          <Show when={state.mode === 'nexus'}>
-            <NexusMode />
-          </Show>
+                <Show when={state.mode === 'nexus'}>
+                  <NexusMode />
+                </Show>
 
-          <Show when={state.status === 'active'}>
-            <DNAControlPanel />
-          </Show>
+                <Show when={state.status === 'active'}>
+                  <DNAControlPanel />
+                </Show>
 
-          <AwakeningButton />
+                <AwakeningButton />
+
+                <AuthModal
+                  isOpen={showAuthModal()}
+                  onClose={() => setShowAuthModal(false)}
+                />
+
+                <SettingsPanel
+                  isOpen={showSettings()}
+                  onClose={() => setShowSettings(false)}
+                />
+              </Suspense>
+
+              <HotkeyHints />
+            </>
+          }
+        >
+          <Suspense fallback={<ModeLoadingFallback />}>
+            <LandingExperience
+              onEnterWorkspace={enterWorkspace}
+              onOpenAuth={() => setShowAuthModal(true)}
+              onOpenSettings={() => setShowSettings(true)}
+              isAuthenticated={authState.isAuthenticated}
+              hasApiKeys={authState.apiKeys.length > 0}
+            />
+          </Suspense>
 
           <AuthModal
             isOpen={showAuthModal()}
@@ -373,9 +433,7 @@ const App: Component = () => {
             isOpen={showSettings()}
             onClose={() => setShowSettings(false)}
           />
-        </Suspense>
-
-        <HotkeyHints />
+        </Show>
       </Show>
 
       <ModeTransition />
@@ -430,11 +488,19 @@ const App: Component = () => {
         }
 
         .app-logo {
+          border: none;
+          background: transparent;
+          padding: 0;
+          cursor: pointer;
           font-family: 'Orbitron', sans-serif;
           font-size: 1.1rem;
           font-weight: 700;
           color: var(--neon-cyan);
           letter-spacing: 2px;
+        }
+
+        .app-logo:hover {
+          text-shadow: var(--glow-cyan);
         }
 
         .mode-badge {
