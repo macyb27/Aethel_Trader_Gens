@@ -1,0 +1,240 @@
+.landing-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 10% -10%, rgba(0, 243, 255, 0.12), transparent 40%),
+    radial-gradient(circle at 90% 0%, rgba(188, 19, 254, 0.16), transparent 35%),
+    var(--void-black);
+}
+
+.landing-hero {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.landing-copy,
+.landing-ai-panel {
+  min-height: 100%;
+}
+
+.landing-kicker {
+  color: var(--neon-cyan);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  margin-bottom: 12px;
+}
+
+.landing-copy h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+
+.landing-subtext {
+  color: var(--text-secondary);
+  max-width: 62ch;
+  margin-bottom: 18px;
+}
+
+.landing-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.landing-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.landing-stat-card {
+  border: 1px solid rgba(0, 243, 255, 0.22);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(10, 10, 10, 0.6);
+}
+
+.landing-stat-value {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--neon-cyan);
+  font-weight: 700;
+}
+
+.landing-stat-label {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+}
+
+.landing-field-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.landing-textarea,
+.landing-select {
+  width: 100%;
+  border: 1px solid rgba(0, 243, 255, 0.28);
+  border-radius: 6px;
+  background: rgba(5, 5, 5, 0.75);
+  color: var(--text-primary);
+  padding: 10px;
+  font-family: var(--font-mono);
+}
+
+.landing-textarea:focus,
+.landing-select:focus,
+.landing-range:focus {
+  outline: 1px solid rgba(0, 243, 255, 0.6);
+}
+
+.landing-quick-goals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 14px;
+}
+
+.landing-chip {
+  border: 1px solid rgba(188, 19, 254, 0.45);
+  border-radius: 999px;
+  background: rgba(188, 19, 254, 0.14);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.landing-chip:hover {
+  border-color: var(--plasma-purple);
+}
+
+.landing-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 12px;
+  align-items: end;
+}
+
+.landing-range {
+  width: 100%;
+}
+
+.landing-generate-btn {
+  width: 100%;
+  margin-top: 14px;
+}
+
+.landing-briefing {
+  margin-top: 14px;
+  border: 1px solid rgba(0, 243, 255, 0.24);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.landing-briefing-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: var(--success-green);
+  font-size: 0.82rem;
+}
+
+.landing-briefing p {
+  color: var(--text-primary);
+  font-size: 0.84rem;
+  margin-bottom: 8px;
+}
+
+.landing-briefing ul {
+  margin-left: 18px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.landing-safeguards {
+  margin-top: 10px;
+  border-top: 1px dashed rgba(128, 128, 128, 0.4);
+  padding-top: 8px;
+}
+
+.landing-safeguards h4 {
+  font-size: 0.75rem;
+  margin-bottom: 6px;
+  color: var(--warning-red);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.landing-explain-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.landing-info-list {
+  display: grid;
+  gap: 12px;
+}
+
+.landing-info-list article h3 {
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.landing-info-list article p {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.landing-momentum {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 243, 255, 0.2);
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+}
+
+.landing-momentum strong {
+  color: var(--neon-cyan);
+}
+
+@media (max-width: 1100px) {
+  .landing-hero,
+  .landing-explain-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .landing-shell {
+    padding: 14px;
+  }
+
+  .landing-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-field-grid {
+    grid-template-columns: 1fr;
+  }
+}

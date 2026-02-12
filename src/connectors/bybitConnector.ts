@@ -21,11 +21,11 @@ export interface BybitConnectorConfig {
  */
 export class BybitConnector implements IExchangeConnector {
   readonly venue = 'BYBIT' as const;
-  private _config: BybitConnectorConfig;
+  private readonly config: BybitConnectorConfig;
   private connected = false;
 
   constructor(config: BybitConnectorConfig = {}) {
-    this._config = config;
+    this.config = config;
   }
 
   async connect(): Promise<void> {
@@ -54,7 +54,7 @@ export class BybitConnector implements IExchangeConnector {
     // Platzhalter: Simuliert sofortige Ausführung
     return {
       intentId: intent.id,
-      orderId: `bybit-${Date.now()}`,
+      orderId: `${this.config.testnet ? 'bybit-testnet' : 'bybit'}-${Date.now()}`,
       clientOrderId: intent.id,
       venue: 'BYBIT',
       status: 'filled',

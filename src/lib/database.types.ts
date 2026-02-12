@@ -1,3 +1,11 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
 export interface Database {
   public: {
     Tables: {
@@ -32,6 +40,15 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'user_settings_id_fkey';
+            columns: ['id'];
+            isOneToOne: true;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       api_keys: {
         Row: {
@@ -70,6 +87,15 @@ export interface Database {
           last_used_at?: string | null;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'api_keys_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       strategies: {
         Row: {
@@ -138,6 +164,15 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'strategies_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       trading_logs: {
         Row: {
@@ -146,7 +181,7 @@ export interface Database {
           level: string;
           source: string;
           message: string;
-          data: Record<string, unknown> | null;
+          data: Json | null;
           created_at: string;
         };
         Insert: {
@@ -155,7 +190,7 @@ export interface Database {
           level?: string;
           source?: string;
           message: string;
-          data?: Record<string, unknown> | null;
+          data?: Json | null;
           created_at?: string;
         };
         Update: {
@@ -164,9 +199,18 @@ export interface Database {
           level?: string;
           source?: string;
           message?: string;
-          data?: Record<string, unknown> | null;
+          data?: Json | null;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'trading_logs_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       market_snapshots: {
         Row: {
@@ -205,7 +249,174 @@ export interface Database {
           low_24h?: number | null;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'market_snapshots_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      payment_methods: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: string;
+          provider: string;
+          name: string;
+          account_identifier: string;
+          currency: string;
+          is_verified: boolean | null;
+          is_active: boolean | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: string;
+          provider: string;
+          name: string;
+          account_identifier: string;
+          currency: string;
+          is_verified?: boolean | null;
+          is_active?: boolean | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: string;
+          provider?: string;
+          name?: string;
+          account_identifier?: string;
+          currency?: string;
+          is_verified?: boolean | null;
+          is_active?: boolean | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'payment_methods_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      wallet_balances: {
+        Row: {
+          id: string;
+          user_id: string;
+          currency: string;
+          balance: number | string;
+          locked_balance: number | string;
+          total_deposited: number | string;
+          total_withdrawn: number | string;
+          total_pnl: number | string;
+          updated_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          currency: string;
+          balance?: number | string;
+          locked_balance?: number | string;
+          total_deposited?: number | string;
+          total_withdrawn?: number | string;
+          total_pnl?: number | string;
+          updated_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          currency?: string;
+          balance?: number | string;
+          locked_balance?: number | string;
+          total_deposited?: number | string;
+          total_withdrawn?: number | string;
+          total_pnl?: number | string;
+          updated_at?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'wallet_balances_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      transactions: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: string;
+          currency: string;
+          amount: number | string;
+          fee: number | string;
+          status: string;
+          payment_method_id: string | null;
+          payment_reference: string | null;
+          description: string | null;
+          created_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: string;
+          currency: string;
+          amount: number | string;
+          fee?: number | string;
+          status?: string;
+          payment_method_id?: string | null;
+          payment_reference?: string | null;
+          description?: string | null;
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: string;
+          currency?: string;
+          amount?: number | string;
+          fee?: number | string;
+          status?: string;
+          payment_method_id?: string | null;
+          payment_reference?: string | null;
+          description?: string | null;
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'transactions_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'transactions_payment_method_id_fkey';
+            columns: ['payment_method_id'];
+            isOneToOne: false;
+            referencedRelation: 'payment_methods';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }

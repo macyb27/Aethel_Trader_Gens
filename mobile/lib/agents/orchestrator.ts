@@ -140,7 +140,6 @@ export class AgentOrchestrator {
         await this.runLivePhase();
       }
       
-      this.workflowState.completedAt = new Date();
     } catch (error) {
       this.sendMessage({
         from: "qa_bot",
@@ -156,6 +155,8 @@ export class AgentOrchestrator {
       
       this.workflowState.phase = "halted";
     } finally {
+      // Always mark workflow completion timestamp, even on halt/failure.
+      this.workflowState.completedAt = new Date();
       this.isRunning = false;
     }
   }
