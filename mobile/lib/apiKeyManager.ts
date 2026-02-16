@@ -2,8 +2,8 @@ import * as SecureStore from 'expo-secure-store';
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client
-const supabaseUrl = 'https://your-supabase-url.supabase.co';
-const supabaseKey = 'your-supabase-key';
+const supabaseUrl = 'https://jrpdsmsddrjkjxbghpgf.supabase.co';
+const supabaseKey = 'sb_publishable_nePwBBZZNcx1hBr8fAn2sg_Htaot8NF';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Function to securely store the API key
