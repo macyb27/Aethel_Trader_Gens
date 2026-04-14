@@ -14,7 +14,7 @@ import math
 import random
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Callable, Protocol, Sequence
+from typing import Any, Protocol, Sequence
 
 import numpy as np
 
