@@ -47,6 +47,8 @@ Dieses Dokument bindet alle Beiträge an gemeinsame Regeln für **quanten-inspir
 
 ## 3. Safety-Guidelines und Oracle Shield
 
+Python-Referenzimplementierung: Paket ``safety/`` (``OracleShield``, ``MultiLevelCircuitBreaker``, ``RiskEngine``), angebunden über ``agents/orchestrator.py``. Alle drei müssen für ``live_ready`` grün sein.
+
 ### 3.1 Prinzipien
 
 1. **Defense in Depth** – Limits auf Order-, Positions-, Portfolio- und Systemebene; Oracle Shield kann global eingreifen (z. B. Handel stoppen, nur Flatten erlauben).  

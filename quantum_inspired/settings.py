@@ -45,9 +45,72 @@ class QuantumInspiredSettings(BaseSettings):
 
     # Paper / Safety
     paper_eval_days: int = Field(default=30, ge=1, description="Simulierte Handelstage für Paper-Eval")
-    safety_max_drawdown_pct: float = Field(default=18.0, ge=0.0)
+    safety_max_drawdown_pct: float = Field(default=22.0, ge=0.0)
     safety_min_sharpe_proxy: float = Field(default=0.35, ge=0.0)
     oracle_shield_strict: bool = Field(default=True)
+
+    # --- Oracle Shield (Crisis & Quantum-Metriken) ---
+    oracle_vix_proxy_stress: float = Field(
+        default=28.0,
+        ge=0.0,
+        description="Ab diesem VIX-Proxy (synthetisch 0–100) gilt Markt als gestresst",
+    )
+    oracle_volatility_spike_ratio: float = Field(
+        default=2.2,
+        ge=1.0,
+        description="Aktuelle Vol / gleitende Basis-Vol über diesem Faktor = Spike",
+    )
+    oracle_entanglement_shift_max: float = Field(
+        default=0.35,
+        ge=0.0,
+        le=1.0,
+        description="Max. |Δ Entanglement| pro Fenster ohne Alarm",
+    )
+    oracle_regime_shift_min: float = Field(
+        default=0.4,
+        ge=0.0,
+        le=1.0,
+        description="Trend-Knick-Indikator ab diesem Wert = Regime-Shift-Verdacht",
+    )
+    oracle_drawdown_crisis_pct: float = Field(
+        default=32.0,
+        ge=0.0,
+        description="Drawdown über diesem Wert löst Crisis-Stufe aus",
+    )
+
+    # --- Circuit Breaker (mehrstufig) ---
+    cb_system_max_drawdown_pct: float = Field(default=25.0, ge=0.0)
+    cb_strategy_max_drawdown_pct: float = Field(default=24.0, ge=0.0)
+    cb_portfolio_max_drawdown_pct: float = Field(default=28.0, ge=0.0)
+    cb_sharpe_floor: float = Field(default=0.25, ge=0.0)
+    cb_liquidity_crash_proxy: float = Field(
+        default=0.85,
+        ge=0.0,
+        le=1.0,
+        description="Proxy 0=normal, 1=extremer Liquiditätsstress",
+    )
+
+    # --- Risk Engine ---
+    risk_max_position_fraction: float = Field(default=0.12, ge=0.0, le=1.0)
+    risk_quantum_diversification_min: float = Field(
+        default=0.15,
+        ge=0.0,
+        le=1.0,
+        description="Mindest-Score für entanglement-basierte Diversifikation",
+    )
+    risk_quantum_volatility_max: float = Field(
+        default=0.72,
+        ge=0.0,
+        le=2.0,
+        description="Obergrenze für Quantum-Volatility-Proxy",
+    )
+    risk_fail_on_hard_violation: bool = Field(default=True)
+
+    # Globaler Fail-Safe
+    paper_only_on_safety_failure: bool = Field(
+        default=True,
+        description="Bei Safety-Violation oder kritischem Fehler nur Paper-Modus",
+    )
 
     # QC-Backend (Platzhalter für PennyLane / Qiskit)
     quantum_backend: Literal["classical", "pennylane", "qiskit"] = Field(

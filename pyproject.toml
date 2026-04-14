@@ -45,7 +45,7 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["quantum_inspired*", "agents*", "strategy_memory*"]
+include = ["quantum_inspired*", "agents*", "strategy_memory*", "safety*"]
 
 [build-system]
 requires = ["setuptools>=69", "wheel"]
