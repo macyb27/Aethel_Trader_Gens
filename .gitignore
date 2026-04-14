@@ -6,8 +6,8 @@ dist/
 .output/
 
 # Tauri
-src-tauri/target/
-src-tauri/Cargo.lock
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/Cargo.lock
 
 # Environment variables
 .env
@@ -56,6 +56,20 @@ coverage/
 *.bak
 *.tar.gz
 *.zip
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist-packages/
+
+# Strategy memory (local vector store / Chroma)
+strategy_memory/data/
 
 # Misc
 .eslintcache

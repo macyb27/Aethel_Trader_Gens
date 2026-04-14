@@ -27,9 +27,9 @@ eas login
 git clone https://github.com/macyb27/Aether-Trader-Mobile.git
 cd Aether-Trader-Mobile
 
-# Option B: Aus Aethel_Trader_Gens
-git clone https://github.com/macyb27/Aethel_Trader_Gens.git
-cd Aethel_Trader_Gens/mobile
+# Option B: Aus dem konsolidierten Monorepo aether_trader_final
+git clone https://github.com/macyb27/aether_trader_final.git
+cd aether_trader_final/apps/mobile
 ```
 
 ---
