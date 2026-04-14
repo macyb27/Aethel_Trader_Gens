@@ -5,12 +5,12 @@
  * Nutzung: npx tsx scripts/backtest-cli.ts <csv-path>
  */
 
-import { loadCandlesFromCsv } from '../src/data/csvLoader';
-import { runBacktest } from '../src/logic/backtestEngine';
-import { createBacktestAdapter } from '../src/agents/backtestAgentAdapter';
-import { BaseAgent } from '../src/agents/baseAgent';
-import type { Candle } from '../src/types/backtest';
-import type { OrderIntent } from '../src/types/trading';
+import { loadCandlesFromCsv } from '../apps/web/src/data/csvLoader';
+import { runBacktest } from '../apps/web/src/logic/backtestEngine';
+import { createBacktestAdapter } from '../apps/web/src/agents/backtestAgentAdapter';
+import { BaseAgent } from '../apps/web/src/agents/baseAgent';
+import type { Candle } from '../apps/web/src/types/backtest';
+import type { OrderIntent } from '../apps/web/src/types/trading';
 import * as fs from 'fs';
 
 // Beispiel-Agent: Einfache SMA-Crossover-Strategie

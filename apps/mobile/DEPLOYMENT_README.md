@@ -220,7 +220,7 @@ Gebaut mit Expo (React Native):
 Dieses System wurde gebaut durch Kombination von Best Practices aus:
 - stefan-jansen/machine-learning-for-trading (16.4k⭐)
 - r/algotrading Community Insights
-- Original Repositories: Aethel_Trader_Gens, Trade_Bot_Emergent, trading-bot-bolt
+- Vorgänger-Repositories (eingegangen in aether_trader_final): u. a. Trade_Bot_Emergent, trading-bot-bolt
 
 ## ⚠️ Disclaimer
 
