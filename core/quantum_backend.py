@@ -39,10 +39,6 @@ class QuantumBackend(ABC):
     ) -> tuple[float, float]:
         """2D-Rotation auf Gen-Paar (klassisch); QC-Implementierung liefert gleiche Signatur."""
 
-    @abstractmethod
-    def measure_uncertainty_proxy(self, values: np.ndarray) -> float:
-        """Proxy 0..1 für Messunsicherheit / Shot-Noise (klassisch: normalisierte Std)."""
-
 
 class ClassicalBackend(QuantumBackend):
     """NumPy-basierte Simulation (Standard)."""
@@ -62,12 +58,6 @@ class ClassicalBackend(QuantumBackend):
             float(np.clip(c * g_i - s * g_j, -1.0, 1.0)),
             float(np.clip(s * g_i + c * g_j, -1.0, 1.0)),
         )
-
-    def measure_uncertainty_proxy(self, values: np.ndarray) -> float:
-        if values.size == 0:
-            return 0.0
-        v = values.astype(np.float64).ravel()
-        return float(np.clip(np.std(v) / (np.mean(np.abs(v)) + 1e-6), 0.0, 1.0))
 
 
 class PennyLaneBackendStub(QuantumBackend):
@@ -92,9 +82,6 @@ class PennyLaneBackendStub(QuantumBackend):
     ) -> tuple[float, float]:
         return self._delegate.rotate_pair(g_i, g_j, theta, rng_state=rng_state)
 
-    def measure_uncertainty_proxy(self, values: np.ndarray) -> float:
-        return self._delegate.measure_uncertainty_proxy(values)
-
 
 class QiskitBackendStub(QuantumBackend):
     """Platzhalter für Qiskit (gleiche Delegation wie PennyLane-Stub)."""
@@ -113,9 +100,6 @@ class QiskitBackendStub(QuantumBackend):
         rng_state: int | None = None,
     ) -> tuple[float, float]:
         return self._delegate.rotate_pair(g_i, g_j, theta, rng_state=rng_state)
-
-    def measure_uncertainty_proxy(self, values: np.ndarray) -> float:
-        return self._delegate.measure_uncertainty_proxy(values)
 
 
 def get_quantum_backend(settings: AetherTraderSettings | None = None) -> QuantumBackend:
