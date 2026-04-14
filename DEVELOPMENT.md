@@ -76,6 +76,14 @@ Dieses Dokument bindet alle Beiträge an gemeinsame Regeln für **quanten-inspir
 
 ---
 
-## 5. Kontakt und Eskalation
+## 5. Python Quantum-Pipeline (QIGA)
+
+- Vom Repository-Root: ``PYTHONPATH=. python3 -m agents.orchestrator``  
+- Konfiguration: Umgebungsvariablen mit Präfix ``AETHER_`` (siehe ``quantum_inspired/settings.py``).  
+- Abhängigkeiten: ``pip install -e ".[quantum]"`` für PyTorch (QLSTM), optional ``[vectors]`` für Chroma/FAISS.
+
+---
+
+## 6. Kontakt und Eskalation
 
 Bei Unsicherheit, ob eine Änderung die Safety-Grenzen berührt: im PR explizit markieren und **konservatives** Default-Verhalten wählen. Für organisatorische Fragen zur Konsolidierung der fünf Repos siehe Root-`README.md` (Roadmap / WIP).
