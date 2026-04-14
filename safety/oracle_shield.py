@@ -91,8 +91,8 @@ class OracleShield:
             ctx: Strategie-, Paper-, Quantum- und Marktkontext.
 
         Returns:
-            OracleShieldVerdict mit ``approved`` nur True, wenn keine harte Krise erkannt wurde
-            und Quantum-/Drawdown-Grenzen eingehalten sind (im strict-Modus strenger).
+            OracleShieldVerdict mit ``approved`` nur True, wenn **keine** der geprüften
+            Bedingungen einen Eintrag in ``reasons`` erzeugt hat (maximale Strenge).
         """
         reasons: list[str] = []
         details: dict[str, Any] = {}
