@@ -26,7 +26,7 @@ from agents.strategy_engineer import StrategyEngineerAgent
 
 ensure_repo_root()
 
-from quantum_inspired.settings import get_settings  # noqa: E402
+from core.settings import get_settings  # noqa: E402
 from safety._logging import log_safety_event  # noqa: E402
 from safety.circuit_breaker import MultiLevelCircuitBreaker  # noqa: E402
 from safety.oracle_shield import MarketStressState, OracleShield, OracleShieldContext  # noqa: E402

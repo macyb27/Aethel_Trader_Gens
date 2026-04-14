@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from quantum_inspired.settings import QuantumInspiredSettings, get_settings
+from core.settings import AetherTraderSettings, get_settings
 
 from safety._logging import log_safety_event
 
@@ -53,14 +53,14 @@ class CircuitBreakerVerdict:
 
 class MultiLevelCircuitBreaker:
     """
-    Drei Ebenen mit konfigurierbaren Schwellen aus :class:`QuantumInspiredSettings`.
+    Drei Ebenen mit konfigurierbaren Schwellen aus :class:`~core.settings.AetherTraderSettings`.
 
     **System-Level:** globale Drawdown-Grenze (institutioneller Not-Aus).
     **Strategy-Level:** pro Strategie / Paper-Lauf (Sharpe, Drawdown).
     **Portfolio-Level:** aggregierter Portfolio-Drawdown + Liquidität.
     """
 
-    def __init__(self, settings: QuantumInspiredSettings | None = None) -> None:
+    def __init__(self, settings: AetherTraderSettings | None = None) -> None:
         self._s = settings or get_settings()
 
     def evaluate(

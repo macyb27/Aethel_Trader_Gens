@@ -17,7 +17,7 @@ ensure_repo_root()
 
 if TYPE_CHECKING:
     from quantum_inspired.qiga import EvolutionResult, PaperTraderProtocol, QIGAEngine, SafetyOracleProtocol
-    from quantum_inspired.settings import QuantumInspiredSettings
+    from core.settings import AetherTraderSettings
 
 logger = logging.getLogger(__name__)
 
@@ -45,12 +45,12 @@ class StrategyEngineerAgent:
     def __init__(
         self,
         *,
-        settings: "QuantumInspiredSettings | None" = None,
+        settings: "AetherTraderSettings | None" = None,
         paper_trader: "PaperTraderProtocol | None" = None,
         safety: "SafetyOracleProtocol | None" = None,
     ) -> None:
         from quantum_inspired.qiga import QIGAEngine
-        from quantum_inspired.settings import get_settings
+        from core.settings import get_settings
 
         s = settings or get_settings()
         self.engine = QIGAEngine(settings=s, paper_trader=paper_trader, safety=safety)

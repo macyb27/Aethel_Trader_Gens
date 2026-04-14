@@ -1,7 +1,7 @@
 """
 Quanten-inspirierte Komponenten: QIGA (Evolution), QAOA-inspirierte Optimierung, QLSTM-Forecasting.
 
-Backend für spätere Anbindung von PennyLane/Qiskit über ``settings.QuantumInspiredSettings.quantum_backend``.
+Backend für spätere Anbindung von PennyLane/Qiskit über ``core.settings.AetherTraderSettings.quantum_backend``.
 """
 
 from __future__ import annotations
@@ -21,6 +21,8 @@ from .qiga import (
     multi_objective_fitness,
     quantum_rotation_gate,
 )
+from core.settings import AetherTraderSettings
+
 from .settings import QuantumInspiredSettings, get_settings
 
 try:
@@ -31,6 +33,7 @@ except ImportError:  # pragma: no cover - optional torch
     train_forecaster_stub = None  # type: ignore[misc, assignment]
 
 __all__ = [
+    "AetherTraderSettings",
     "DefaultOracleShield",
     "DefaultPaperTrader",
     "EvolutionResult",

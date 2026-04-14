@@ -20,7 +20,7 @@ from typing import Any
 
 import numpy as np
 
-from quantum_inspired.settings import QuantumInspiredSettings, get_settings
+from core.settings import AetherTraderSettings, get_settings
 
 from safety._logging import log_safety_event
 
@@ -47,7 +47,7 @@ class RiskEngine:
     und ``risk_fail_on_hard_violation`` aktiv ist.
     """
 
-    def __init__(self, settings: QuantumInspiredSettings | None = None) -> None:
+    def __init__(self, settings: AetherTraderSettings | None = None) -> None:
         self._s = settings or get_settings()
 
     def assess(

@@ -18,7 +18,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-from quantum_inspired.settings import QuantumInspiredSettings, get_settings
+from core.settings import AetherTraderSettings, get_settings
 
 from safety._logging import log_safety_event
 
@@ -77,10 +77,10 @@ class OracleShield:
     Erweiterte Crisis-Detection mit quanten-inspirierten Metriken.
 
     Attributes:
-        settings: Schwellen und Strikt-Modus aus :class:`QuantumInspiredSettings`.
+        settings: Schwellen und Strikt-Modus aus :class:`~core.settings.AetherTraderSettings`.
     """
 
-    def __init__(self, settings: QuantumInspiredSettings | None = None) -> None:
+    def __init__(self, settings: AetherTraderSettings | None = None) -> None:
         self._s = settings or get_settings()
 
     def evaluate(self, ctx: OracleShieldContext) -> OracleShieldVerdict:

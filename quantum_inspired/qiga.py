@@ -18,7 +18,8 @@ from typing import Any, Protocol, Sequence
 
 import numpy as np
 
-from .settings import QuantumInspiredSettings, get_settings
+from core.quantum_backend import QuantumBackend, get_quantum_backend
+from core.settings import AetherTraderSettings, get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -109,22 +110,21 @@ def quantum_rotation_gate(
     theta: float,
     *,
     rng: random.Random,
+    backend: QuantumBackend | None = None,
 ) -> np.ndarray:
     """
-    Wendet einen quanten-inspirierten *mixing*-Operator auf Gen-Paare an (klassische Simulation).
+    Wendet einen quanten-inspirierten *mixing*-Operator auf Gen-Paare an.
 
-    Inspiriert durch GROVER/Rotations-Gates: Paare (i,j) werden in der Ebene gedreht,
-    begrenzt auf ``[-1, 1]``. Kein echter QPU-Aufruf – API-kompatibel für späteren Ersatz
-    durch PennyLane-Parameter-Rotation.
+    Nutzt :class:`~core.quantum_backend.QuantumBackend` (classical / pennylane / qiskit Stub),
+    sodass echte QC-Hardware später dieselbe API bedienen kann.
     """
     out = genes.astype(np.float64, copy=True)
-    c, s = math.cos(theta), math.sin(theta)
+    qb = backend or get_quantum_backend()
     for i, j in pair_indices:
         if i >= len(out) or j >= len(out):
             continue
         gi, gj = float(out[i]), float(out[j])
-        out[i] = np.clip(c * gi - s * gj, -1.0, 1.0)
-        out[j] = np.clip(s * gi + c * gj, -1.0, 1.0)
+        out[i], out[j] = qb.rotate_pair(gi, gj, theta)
     # leichte asymmetrische Störung nur wenn nicht deterministisch gewünscht
     if rng.random() < 0.05:
         k = rng.randrange(len(out))
@@ -206,7 +206,7 @@ class DefaultPaperTrader:
 class DefaultOracleShield:
     """Einfache Schwelle-basierte Oracle-Shield-Implementierung."""
 
-    def __init__(self, settings: QuantumInspiredSettings | None = None) -> None:
+    def __init__(self, settings: AetherTraderSettings | None = None) -> None:
         self._s = settings or get_settings()
 
     def check(self, metrics: dict[str, float], explainability: dict[str, Any]) -> SafetyVerdict:
@@ -236,7 +236,7 @@ class DefaultOracleShield:
 def multi_objective_fitness(
     paper: PaperEvaluationResult,
     entanglement: float,
-    settings: QuantumInspiredSettings,
+    settings: AetherTraderSettings,
     *,
     population_diversity: float,
 ) -> MultiObjectiveFitness:
@@ -293,7 +293,7 @@ class QIGAEngine:
 
     def __init__(
         self,
-        settings: QuantumInspiredSettings | None = None,
+        settings: AetherTraderSettings | None = None,
         paper_trader: PaperTraderProtocol | None = None,
         safety: SafetyOracleProtocol | None = None,
     ) -> None:
@@ -335,6 +335,7 @@ class QIGAEngine:
                 pairs,
                 self.settings.qiga_rotation_strength * math.pi,
                 rng=self._rng,
+                backend=get_quantum_backend(self.settings),
             )
         return StrategyChromosome(
             genes=g.astype(np.float32),
@@ -472,7 +473,7 @@ class QIGAEngine:
 
 def evolve_strategies(
     *,
-    settings: QuantumInspiredSettings | None = None,
+        settings: AetherTraderSettings | None = None,
     paper_trader: PaperTraderProtocol | None = None,
     safety: SafetyOracleProtocol | None = None,
     generations: int | None = None,
