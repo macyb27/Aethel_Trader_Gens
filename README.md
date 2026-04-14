@@ -182,7 +182,7 @@ Bis zur vollständigen Verdrahtung von `paper_trading/` und Safety-Policies dien
 
 **Work in Progress** – dieses Repository entsteht durch **Konsolidierung von fünf bisher getrennten Repos**. Pfade, APIs und Namenskonventionen können sich zwischen Releases ändern. Für produktive oder kapitaltragende Nutzung ist ausdrücklich eine eigene Risiko- und Rechtsprüfung erforderlich.
 
-**Kanonical:** [github.com/macyb27/aether_trader_final](https://github.com/macyb27/aether_trader_final) – alle Klon- und Remote-Befehle beziehen sich auf dieses Repository.
+**Referenz-Repository:** [github.com/macyb27/aether_trader_final](https://github.com/macyb27/aether_trader_final) – alle Klon- und Remote-Befehle beziehen sich auf dieses Repository.
 
 ---
 
