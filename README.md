@@ -1,191 +1,149 @@
 # Aether Trader
 
-**Autonome Strategie-Entwicklung für algorithmischen Handel** – konsolidiert als Monorepo mit quanten-inspirierten Optimierungs- und Lernverfahren als zentralem Entscheidungsmotor.
+**Aether Trader** ist ein **autonomer, quantum-inspirierter Super-Bot** für algorithmischen Handel: er kombiniert Hypothesen (Forecasting & Regime-Erkennung), evolutionäre Strategie-Suche (**QIGA**), realistisches **Paper-Trading**, Multi-Ziel-Fitness und einen **Safety-First**-Gatekeeper (Oracle Shield, Circuit Breaker, Risk Engine). Nur Strategien, die **alle** Prüfungen bestehen, werden als **live-ready** vorgeschlagen und im **Strategy Memory** versioniert.
+
+Dieses Repository ist das **finale Monorepo** (Konsolidierung mehrerer Vorgänger-Repos). Ziel ist eine durchgängige Pipeline von Forschung bis gated Live-Einsatz – nicht ein einzelnes Skript, sondern ein wartbares System mit klaren Grenzen.
 
 ---
 
-## Vision
+## Vision: Der Super-Bot
 
-Aether Trader verfolgt eine Pipeline von **Forschung → Simulation → abgesichertem Einsatz**: Strategien entstehen und verändern sich autonom unter Einbindung klassischer und **quanten-inspirierter** Methoden. Als Kern dienen drei komplementäre Bausteine:
-
-| Baustein | Rolle |
-|----------|--------|
-| **QIGA** (Quantum-Inspired Genetic Algorithm) | Evolutive Suche im Strategieraum: Genome, Crossover/Mutation, Fitness über Risiko-adjustierte Kennzahlen und Stabilität unter Regimewechseln. |
-| **QAOA** (Quantum Approximate Optimization) – inspiriert | Kombinatorische Entscheidungen (Allokation, Routing zwischen Teilstrategien, Scheduling von Orders) als approximierte Optimierung auf Graphen / Constraint-Strukturen. |
-| **QI-MARL** (Quantum-Inspired Multi-Agent Reinforcement Learning) | Mehrere spezialisierte Agenten (Research, Execution, Risk) koordinieren sich mit geteilten Zielen und begrenzter Informationsaustausch – quanten-inspirierte Repräsentationen und Sampling-Mechanismen unterstützen Exploration in hochdimensionalen Zuständen. |
-
-Ziel ist kein „Black-Box-Signal“, sondern **nachvollziehbare** Strategieiteration mit klaren Safety-Grenzen und reproduzierbaren Paper-Phasen, bevor Kapital exponiert wird.
+1. **Hypothesis & Marktverständnis** – QLSTM-ähnliches Forecasting und Regime-Klassifikation (QSVM/VQC-Pfade) liefern Kontext und Risiko-Hinweise für die Evolutionsphase.  
+2. **Evolution** – **QIGA** erzeugt und verfeinert Strategie-Chromosome mit quanten-inspirierten Operatoren (Rotation, Entanglement-Metriken) und Multi-Objective-Fitness.  
+3. **Simulation** – **Paper-Trading** (konfigurierbar, Standard z. B. 30 Handelstage) bewertet jede Kandidatenstrategie unter realistischen Annahmen.  
+4. **Governance** – **Oracle Shield**, **Circuit Breaker** und **Risk Engine** bilden den letzten Schutzwall: keine Live-Freigabe ohne vollständige Checks.  
+5. **Gedächtnis** – erfolgreiche oder lehrreiche Läufe landen im **Strategy Memory** (Vektor-Store / Metadaten) mit Explainability.  
+6. **Zukunft** – Backend-Switch `classical` → `pennylane` / `qiskit` in `core/quantum_backend.py` vorbereitet, ohne die klassische Pipeline zu brechen.
 
 ---
 
-## Wichtige Features
-
-- **Paper-Trading-Lernphasen**  
-  Getrennte Umgebungen für Backtest, Walk-Forward und Live-Paper: gleiche Schnittstellen zu Börsen-Connectors, deterministische Seeds wo möglich, Logging für Strategie-Gedächtnis und Audits.
-
-- **Safety Layer mit Oracle Shield**  
-  Circuit Breaker, Drawdown- und Volatilitäts-Limits, Positions- und Exposure-Caps, News-/Liquidations-Trigger und manuelle Not-Stufen; Entscheidungen des QI-Stacks werden nur freigegeben, wenn Policy- und Risiko-Gates grün sind.
-
-- **Technisch orientiertes Dashboard**  
-  Web- und Desktop-Oberflächen für GSM-/Strategie-Visualisierung, Orderflow- und Korrelationsmetriken, Agenten-Status, Safety-Overlay und Journale – ausgelegt für Operatoren und Forschung, nicht nur für Marketing-Metriken.
-
----
-
-## Tech-Stack und Monorepo-Aufbau
-
-| Bereich | Technologie / Ort |
-|---------|-------------------|
-| **Web** | Solid.js, Vite, TypeScript → `apps/web/` |
-| **Mobile** | Expo, React Native → `apps/mobile/` |
-| **Desktop** | Tauri 2, Rust (Shell) → `apps/desktop/` |
-| **Agents & Orchestrierung** | TypeScript → `agents/` (Migration in Pakete möglich) |
-| **Backend & Services** | Python ≥ 3.11, APIs, Worker → `backend/` (Ausbau) |
-| **Quanten-inspiriert** | Algorithmen, Experimente → `quantum_inspired/` |
-| **Safety & Paper** | Policies, Simulation → `safety/`, `paper_trading/` |
-| **Strategie-Gedächtnis** | CRDT / Logs / Embeddings → `strategy_memory/` |
-| **Infrastruktur** | IaC, Deploy → `infrastructure/` |
-| **Gemeinsame Pakete** | `packages/` |
-| **Edge / DB** | Supabase → `supabase/` |
-| **Tooling** | pnpm Workspaces, Turborepo (`pnpm-workspace.yaml`, `turbo.json`) |
-
-Python-Metadaten und optionale Dev-Tools: `pyproject.toml`.
-
----
-
-## Architektur (High-Level)
+## Autonomer Super-Bot-Loop (End-to-End)
 
 ```mermaid
-flowchart TB
-  subgraph Experience["Experience Layer"]
-    WEB["apps/web – Dashboard"]
-    MOB["apps/mobile"]
-    DSK["apps/desktop – Tauri"]
+flowchart LR
+  subgraph H["Hypothesis"]
+    QL["QLSTM / Forecasting"]
+    QS["QSVM / Regime"]
   end
 
-  subgraph Intelligence["QI Core"]
-    QIGA["QIGA – Evolutive Strategie-Suche"]
-    QAOA["QAOA-inspiriert – Kombinatorische Optimierung"]
-    MARL["QI-MARL – Multi-Agent Koordination"]
+  subgraph E["Evolution"]
+    QIGA["QIGA evolve"]
   end
 
-  subgraph Execution["Execution & Market"]
-    AGT["agents/ – Orchestrierung"]
-    PAPER["paper_trading/"]
-    CONN["Exchange Connectors"]
+  subgraph P["Evaluation"]
+    PT["Paper-Trading\n(~30 Tage)"]
+    FIT["Multi-Objective\nFitness"]
   end
 
-  subgraph Safety["Safety & Governance"]
-    SHIELD["Oracle Shield – Limits & Breakers"]
-    POL["safety/ – Policies"]
+  subgraph S["Safety Gate"]
+    OS["Oracle Shield"]
+    CB["Circuit Breaker"]
+    RE["Risk Engine"]
   end
 
-  subgraph Data["Data & Memory"]
-    MEM["strategy_memory/"]
-    BE["backend/ – APIs & Jobs"]
-    SB["supabase/"]
-    VDB[("Vector DB / Embeddings")]
+  subgraph M["Memory & Live"]
+    SM["Strategy Memory"]
+    LR["Live-Ready\nVorschlag"]
   end
 
-  WEB --> AGT
-  MOB --> AGT
-  DSK --> WEB
-
-  AGT --> QIGA
-  AGT --> QAOA
-  AGT --> MARL
-
-  QIGA --> PAPER
-  QAOA --> PAPER
-  MARL --> PAPER
-
-  PAPER --> CONN
-  CONN --> SHIELD
-  SHIELD --> POL
-
-  AGT --> MEM
-  BE --> MEM
-  BE --> SB
-  MEM --> VDB
+  QL --> QS
+  QS --> QIGA
+  QIGA --> PT
+  PT --> FIT
+  FIT --> OS
+  OS --> CB
+  CB --> RE
+  RE -->|alle OK| SM
+  SM --> LR
+  RE -->|blockiert| X["Paper-Only /\nAudit-Log"]
 ```
+
+**Safety-First:** Schlägt ein beliebiger Schritt fehl oder liefert harte Verletzungen, bleibt das System im **Paper-Modus** und protokolliert Gründe (strukturierte Logs unter `aether.pipeline` / `aether.safety`).
+
+---
+
+## Monorepo-Struktur (Überblick)
+
+| Pfad | Inhalt |
+|------|--------|
+| `apps/web/` | Solid.js + Vite – technisches Dashboard |
+| `apps/mobile/` | Expo / React Native |
+| `apps/desktop/` | Tauri 2 + Rust – Desktop-Shell |
+| `core/` | Zentrale **Settings**, **Logging**, **Quantum-Backend-Switch** |
+| `agents/` | Python-Orchestrierung + TS-Agenten (Legacy) |
+| `quantum_inspired/` | QIGA, QAOA-inspiriert, QLSTM, … |
+| `safety/` | Oracle Shield, Circuit Breaker, Risk Engine |
+| `paper_trading/` | Paper-Simulationen, Fixtures |
+| `strategy_memory/` | Persistenz / Vector Store |
+| `backend/` | APIs & Worker (Ausbau) |
+| `infrastructure/` | IaC, Deploy |
+| `packages/` | gemeinsame Bibliotheken |
+| `scripts/` | Hilfsskripte |
+| `tests/` | Pytest & weitere Tests |
+| `docs/` | Zusätzliche Dokumentation |
+| `supabase/` | Edge Functions & Schema (optional) |
+| `.github/workflows/` | CI (z. B. Mobile-APK) |
+
+---
+
+## Tech-Stack
+
+- **Frontend:** Solid.js, Vite, TypeScript (`apps/web/`)  
+- **Mobile:** Expo (`apps/mobile/`)  
+- **Desktop:** Tauri 2, Rust (`apps/desktop/`)  
+- **Python:** ≥ 3.11 – QIGA, Safety, Orchestrator (`pyproject.toml`, Pakete `core`, `quantum_inspired`, `safety`, `agents`)  
+- **Tooling:** pnpm Workspaces, Turborepo  
 
 ---
 
 ## Setup
 
-### Voraussetzungen
-
-- **Node.js** ≥ 18 (empfohlen: 22 LTS)
-- **pnpm** (Version siehe `packageManager` in Root-`package.json`)
-- **Python** ≥ 3.11 (Backend-Skripte und spätere Services)
-- Optional: **Rust** (für `apps/desktop` / Tauri-Builds)
-
-### Installation
-
 ```bash
 git clone https://github.com/macyb27/aether_trader_final.git
 cd aether_trader_final
 
-# Abhängigkeiten (Workspaces)
 pnpm install
-
-# Web-App
-pnpm --filter aether-trader-omega install
-pnpm dev:web
-# → typischerweise http://localhost:3000 (siehe apps/web)
-
-# Mobile (Expo) – nur bei Bedarf
-pnpm dev:mobile
-```
-
-Python-Umgebung (Beispiel):
-
-```bash
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -e ".[dev]"     # sobald installierbare Pakete im Backend ergänzt sind
-```
-
-### Environment
-
-```bash
 cp .env.example .env
-# Werte für Supabase, Exchange-Testkeys, LLM und Vector-DB setzen (siehe Kommentare in .env.example)
+
+# Web
+pnpm dev:web
+
+# Python (Beispiel)
+python3 -m venv .venv && source .venv/bin/activate
+pip install numpy pydantic pydantic-settings
+PYTHONPATH=. python3 -m agents.orchestrator
 ```
 
-Apps können zusätzlich eigene `.env`-Dateien unter `apps/web` oder `apps/mobile` erwarten – dort jeweils die App-Dokumentation prüfen.
-
-### Erster Paper-Trading-orientierter Lauf
-
-1. Exchange- und Daten-APIs in `.env` mit **Testnet / Paper** konfigurieren (keine Live-Keys).  
-2. Web-App starten (`pnpm dev:web`) und im UI den **Paper- / Simulationsmodus** wählen, sofern verfügbar.  
-3. Optional CLI-Backtest (Pfade an Monorepo angepasst):
-
-   ```bash
-   pnpm exec tsx scripts/backtest-cli.ts <pfad-zur-csv>
-   ```
-
-Bis zur vollständigen Verdrahtung von `paper_trading/` und Safety-Policies dienen diese Schritte als **Entwicklungs- und Smoke-Tests**; produktive Live-Schaltung ist nicht Ziel dieses Repos in der Konsolidierungsphase.
+*(Falls dein Klon noch leer ist: nutze dieses Repository als Vorlage oder pushe den aktuellen Stand nach `aether_trader_final` – siehe unten „Sync“.)*
 
 ---
 
-## Roadmap (Kurzüberblick)
+## Roadmap
 
-1. **Konsolidierung** – Paketgrenzen, Imports, CI für alle Apps; Backend-Python-Paket unter `backend/`.  
-2. **QI-Pipeline** – QIGA/QAOA-inspiriert/QI-MARL als klar versionierte Module in `quantum_inspired/` mit reproduzierbaren Experimentconfigs.  
-3. **Paper → gated Live** – Oracle Shield als Pflichtpfad; Feature-Flags und Kapital-Limits.  
-4. **Strategy Memory** – Embeddings, Journale, Retrieval für Agenten- und Mensch-in-the-Loop-Reviews.  
-5. **Hardening** – Observability, Chaos-Tests für Connector-Ausfälle, Compliance-Dokumentation.
+1. Vollständige QML-Pipeline (QLSTM + QSVM/VQC) an den Orchestrator koppeln.  
+2. Kontinuierlicher autonomer Loop (`run_autonomous_loop.py`) mit konfigurierbaren Intervallen.  
+3. Dashboard: Live-Pipeline-Status, Quantum-Metriken, Strategy-DNA.  
+4. Echte QC-Backends (PennyLane/Qiskit) hinter `core/quantum_backend.py`.  
+5. Produktions-Hardening: Observability, Secrets-Management, Compliance-Doku.
 
 ---
 
 ## Work in Progress
 
-**Work in Progress** – dieses Repository entsteht durch **Konsolidierung von fünf bisher getrennten Repos**. Pfade, APIs und Namenskonventionen können sich zwischen Releases ändern. Für produktive oder kapitaltragende Nutzung ist ausdrücklich eine eigene Risiko- und Rechtsprüfung erforderlich.
+Konsolidierung aus mehreren Vorgänger-Repos; APIs und Pfade können sich noch ändern. **Keine Anlageberatung.** Eigenes Risiko- und Rechtsreview für Live-Handel.
 
-**Referenz-Repository:** [github.com/macyb27/aether_trader_final](https://github.com/macyb27/aether_trader_final) – alle Klon- und Remote-Befehle beziehen sich auf dieses Repository.
+- Entwicklungsregeln: **[DEVELOPMENT.md](./DEVELOPMENT.md)**  
+- Referenz-Remote (falls abweichend): [github.com/macyb27/aether_trader_final](https://github.com/macyb27/aether_trader_final)
 
 ---
 
-## Weiterführend
+## Sync in ein leeres `aether_trader_final`
 
-- Entwicklungs- und Sicherheitsrichtlinien: **[DEVELOPMENT.md](./DEVELOPMENT.md)**
+Wenn **github.com/macyb27/aether_trader_final** noch leer ist, nach dem ersten Push dieses Stands:
+
+```bash
+git remote add final https://github.com/macyb27/aether_trader_final.git
+git push -u final main
+```
+
+(bzw. `git push -u final <dein-branch>:main` mit `--force` nur nach expliziter Absprache).
