@@ -4,9 +4,9 @@
   "version": "4.0.0",
   "identifier": "com.aether.trader.omega",
   "build": {
-    "beforeDevCommand": "npm run dev --prefix ../../web",
+    "beforeDevCommand": "npm run dev --prefix ../web",
     "devUrl": "http://localhost:3000",
-    "beforeBuildCommand": "npm run build --prefix ../../web",
+    "beforeBuildCommand": "npm run build --prefix ../web",
     "frontendDist": "../../web/dist"
   },
   "app": {
