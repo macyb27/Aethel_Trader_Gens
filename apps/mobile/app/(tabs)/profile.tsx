@@ -301,8 +301,8 @@ export default function ProfileScreen() {
 
           <View className="mt-4 pt-4 border-t border-border">
             <Text className="text-muted text-xs leading-5">
-              Diese App kombiniert die besten Features aus den Original-Repositories:
-              Aethel_Trader_Gens, Trade_Bot_Emergent und trading-bot-bolt. Sie verwendet
+              Diese App ist Teil des Monorepos aether_trader_final (Konsolidierung früherer
+              Repositories, u. a. Trade_Bot_Emergent und trading-bot-bolt). Sie verwendet
               genetische Algorithmen, Sentiment-Analyse und selbstlernende Trading-Regeln.
             </Text>
           </View>

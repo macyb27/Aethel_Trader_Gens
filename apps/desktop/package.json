@@ -1,0 +1,8 @@
+{
+  "name": "aether-trader-desktop",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "clean": "cargo clean --manifest-path src-tauri/Cargo.toml"
+  }
+}
